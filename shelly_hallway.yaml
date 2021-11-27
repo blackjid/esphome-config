@@ -5,10 +5,7 @@ substitutions:
   # Name for the relays
   channel_1: Hallway
 
-esphome:
-  name: ${devicename}
-  platform: ESP8266
-  board: esp01_1m
+<<: !include common/esphome/esp01_1m.yaml
 
 <<: !include common/common.yaml
 

@@ -21,10 +21,7 @@ substitutions:
   fitbit_mpgomeze: MP
   fitbit_mpgomeze_mac: "DA:5A:E8:3A:38:D5"
 
-esphome:
-  name: ble-tracker
-  platform: ESP32
-  board: nodemcu-32s
+<<: !include common/esphome/nodemcu_32s.yaml
 
 <<: !include common/common.yaml
 

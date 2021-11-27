@@ -8,10 +8,7 @@ substitutions:
   max_power: "2000.0" # watt
   max_temp: "83.0" # °C
   
-esphome:
-  name: ${devicename}
-  platform: ESP8266
-  board: esp01_1m
+<<: !include common/esphome/esp01_1m.yaml
 
 <<: !include common/common.yaml
 

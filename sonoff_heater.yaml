@@ -3,10 +3,7 @@ substitutions:
   formated_name: Sonoff Heater
   ip_address: 10.0.2.202
 
-esphome:
-  name: ${devicename}
-  platform: ESP8266
-  board: esp01_1m
+<<: !include common/esphome/esp01_1m.yaml
 
 <<: !include common/common.yaml
 
