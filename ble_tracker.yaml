@@ -1,0 +1,113 @@
+substitutions:
+  devicename: ble-tracker
+  formated_name: BLE Tracker
+  ip_address: 10.0.2.58
+  thermometer_1: Kitchen
+  thermometer_1_mac: "A4:C1:38:E9:3D:47"
+  thermometer_1_bindkey: "6794416320c2d58672689634a916dd10"
+  thermometer_2: Kids Bedroom
+  thermometer_2_mac: "A4:C1:38:8F:EC:15"
+  thermometer_2_bindkey: "55521d7a92413c30c7a9baeee04a70b2"
+  flora_1: Garden Sur
+  flora_1_mac: "C4:7C:8D:6C:CB:25"
+  flora_2: Garden Poniente
+  flora_2_mac: "C4:7C:8D:6C:CB:44"
+  flora_3: Garden Norte
+  flora_3_mac: "C4:7C:8D:6C:CB:E8"
+  flora_4: Garden Cajon
+  flora_4_mac: "C4:7C:8D:6C:CB:C4"
+  garmin_blackjid: Blackjid
+  garmin_blackjid_mac: "B4:C2:6A:04:A1:B6"
+  fitbit_mpgomeze: MP
+  fitbit_mpgomeze_mac: "DA:5A:E8:3A:38:D5"
+
+esphome:
+  name: ble-tracker
+  platform: ESP32
+  board: nodemcu-32s
+
+<<: !include common/common.yaml
+
+esp32_ble_tracker:
+
+binary_sensor:
+  # Presence based on MAC address
+  - platform: ble_presence
+    mac_address: ${garmin_blackjid_mac}
+    name: "${garmin_blackjid} Watch BLE"
+  - platform: ble_presence
+    mac_address: ${fitbit_mpgomeze_mac}
+    name: "${fitbit_mpgomeze} Watch BLE"
+
+sensor:
+  - platform: xiaomi_lywsd03mmc
+    mac_address: ${thermometer_1_mac}
+    bindkey: ${thermometer_1_bindkey}
+    temperature:
+      name: "${thermometer_1} Temperature"
+    humidity:
+      name: "${thermometer_1} Humidity"
+    battery_level:
+      name: "${thermometer_1} Battery Level"
+      
+  - platform: xiaomi_lywsd03mmc
+    mac_address: ${thermometer_2_mac}
+    bindkey: ${thermometer_2_bindkey}
+    temperature:
+      name: "${thermometer_2} Temperature"
+    humidity:
+      name: "${thermometer_2} Humidity"
+    battery_level:
+      name: "${thermometer_2} Battery Level"
+
+  - platform: xiaomi_hhccjcy01
+    mac_address: ${flora_1_mac}
+    temperature:
+      name: "${flora_1} Temperature"
+    moisture:
+      name: "${flora_1} Moisture"
+    illuminance:
+      name: "${flora_1} Illuminance"
+    conductivity:
+      name: "${flora_1} Soil Conductivity"
+    battery_level:
+      name: "${flora_1} Battery Level"
+  
+  - platform: xiaomi_hhccjcy01
+    mac_address: ${flora_2_mac}
+    temperature:
+      name: "${flora_2} Temperature"
+    moisture:
+      name: "${flora_2} Moisture"
+    illuminance:
+      name: "${flora_2} Illuminance"
+    conductivity:
+      name: "${flora_2} Soil Conductivity"
+    battery_level:
+      name: "${flora_2} Battery Level"
+      
+  - platform: xiaomi_hhccjcy01
+    mac_address: ${flora_3_mac}
+    temperature:
+      name: "${flora_3} Temperature"
+    moisture:
+      name: "${flora_3} Moisture"
+    illuminance:
+      name: "${flora_3} Illuminance"
+    conductivity:
+      name: "${flora_3} Soil Conductivity"
+    battery_level:
+      name: "${flora_3} Battery Level"
+      
+  - platform: xiaomi_hhccjcy01
+    mac_address: ${flora_4_mac}
+    temperature:
+      name: "${flora_4} Temperature"
+    moisture:
+      name: "${flora_4} Moisture"
+    illuminance:
+      name: "${flora_4} Illuminance"
+    conductivity:
+      name: "${flora_4} Soil Conductivity"
+    battery_level:
+      name: "${flora_4} Battery Level"

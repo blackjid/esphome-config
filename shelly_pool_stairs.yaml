@@ -1,0 +1,55 @@
+substitutions:
+  devicename: shelly-pool-stairs
+  formated_name: Shelly Pool Stairs
+  ip_address: 10.0.2.237
+  # Name for the relays
+  channel_1: Stairs
+  channel_2: Family Room
+  max_power: "2000.0" # watt
+  max_temp: "83.0" # °C
+  
+esphome:
+  name: ${devicename}
+  platform: ESP8266
+  board: esp01_1m
+
+<<: !include common/common.yaml
+
+sensor:
+  - platform: adc
+    pin: A0
+    name: "${formated_name} Power"
+    update_interval: 1s
+
+light:
+  - platform: rgb
+    name: "Pool Lights Stairs"
+    red: pwm_r
+    green: pwm_g
+    blue: pwm_b
+    # white: pwm_w
+    effects:
+      - random:
+      - strobe:
+      - flicker:
+
+output:
+  - platform: esp8266_pwm
+    pin: GPIO12
+    frequency: 1000 Hz
+    id: pwm_r
+
+  - platform: esp8266_pwm
+    pin: GPIO15
+    frequency: 1000 Hz
+    id: pwm_g
+
+  - platform: esp8266_pwm
+    pin: GPIO14
+    frequency: 1000 Hz
+    id: pwm_b
+
+  # - platform: esp8266_pwm
+  #   pin: GPIO4
+  #   frequency: 1000 Hz
+  #   id: pwm_w

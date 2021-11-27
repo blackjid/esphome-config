@@ -1,0 +1,189 @@
+substitutions:
+  devicename: shelly-stairs
+  formated_name: Shelly Stairs
+  ip_address: 10.0.2.203
+  # Name for the relays
+  channel_1: Stairs
+  channel_2: Family Room
+  max_power: "2000.0" # watt
+  max_temp: "83.0" # °C
+  
+
+esphome:
+  name: ${devicename}
+  platform: ESP8266
+  board: esp01_1m
+
+<<: !include common/common.yaml
+
+i2c:
+  sda: GPIO12
+  scl: GPIO14
+
+sensor:
+  # Reports how long the device has been powered (in hours) since last reboot
+  - platform: uptime
+    name: ${formated_name} Uptime
+    update_interval: 60s
+    filters:
+      - lambda: return x / 3600;
+    unit_of_measurement: "h"
+  - platform: wifi_signal
+    name: "${formated_name} Wifi Signal"
+    update_interval: 60s
+  - platform: ade7953
+    voltage:
+      name: ${formated_name} voltage
+    current_a:
+      name: ${channel_1} current
+      internal: true
+    current_b:
+      name: ${channel_2} current
+      internal: true
+    active_power_a:
+      name: ${channel_1} power
+      id: power_channel_1
+      filters:
+        - multiply: 1
+      on_value_range:
+        - above: ${max_power}
+          then:
+            - switch.turn_off: shelly_relay_1
+            - homeassistant.service:
+                service: persistent_notification.create
+                data:
+                  title: Message from ${formated_name}
+                data_template:
+                  message: Switch turned off because power exceeded ${max_power}W
+    active_power_b:
+      name: ${channel_2} power
+      id: power_channel_2
+      filters:
+        - multiply: -1
+      on_value_range:
+        - above: ${max_power}
+          then:
+            - switch.turn_off: shelly_relay_2
+            - homeassistant.service:
+                service: persistent_notification.create
+                data:
+                  title: Message from ${formated_name}
+                data_template:
+                  message: Switch turned off because power exceeded ${max_power}W
+    update_interval: 30s
+
+  - platform: total_daily_energy
+    name: ${channel_1} energy
+    power_id: power_channel_1
+    filters:
+      # Multiplication factor from W to kW is 0.001
+      - multiply: 0.001
+    unit_of_measurement: kW
+
+  - platform: total_daily_energy
+    name: ${channel_2} energy
+    power_id: power_channel_2
+    filters:
+      # Multiplication factor from W to kW is 0.001
+      - multiply: 0.001
+    unit_of_measurement: kW
+
+  # NTC Temperature
+  - platform: ntc
+    sensor: temp_resistance_reading
+    name: ${formated_name} temperature
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    icon: "mdi:thermometer"
+    calibration:
+      b_constant: 3350
+      reference_resistance: 10kOhm
+      reference_temperature: 298.15K
+    on_value_range:
+      - above: ${max_temp}
+        then:
+          - switch.turn_off: shelly_relay_1
+          - switch.turn_off: shelly_relay_2
+          - homeassistant.service:
+              service: persistent_notification.create
+              data:
+                title: Message from ${devicename}
+              data_template:
+                message: Switch turned off because temperature exceeded ${max_temp}°C
+  - platform: resistance
+    id: temp_resistance_reading
+    sensor: temp_analog_reading
+    configuration: DOWNSTREAM
+    resistor: 32kOhm
+  - platform: adc
+    id: temp_analog_reading
+    pin: A0
+
+status_led:
+  pin:
+    number: GPIO0
+    inverted: yes
+
+switch:
+  - platform: gpio
+    id: shelly_relay_1
+    name: ${channel_1} relay
+    pin: GPIO15
+    icon: "mdi:electric-switch"
+    restore_mode: ALWAYS_ON
+  - platform: gpio
+    id: shelly_relay_2
+    name: ${channel_2} relay
+    pin: GPIO4
+    icon: "mdi:electric-switch"
+    restore_mode: RESTORE_DEFAULT_OFF
+
+binary_sensor:
+  - platform: gpio
+    pin: GPIO16
+    name: "ade7953 IRQ pin"
+    internal: true
+
+  - platform: gpio
+    pin:
+      number: GPIO5
+    name: ${channel_1} Switch
+    on_double_click:
+      min_length: 50ms
+      max_length: 350ms
+      then:
+        - homeassistant.service:
+            service: scene.create
+            data:
+              scene_id: scene.stairs_temp
+              snapshot_entities: light.stairs
+        - delay: 1s
+        - homeassistant.service:
+            service: scene.turn_on
+            data:
+              entity_id: scene.stairs_full_brightness
+              transition: "5"
+    on_state:
+      if:
+        condition:
+          - switch.is_off: shelly_relay_1
+        then:
+          - switch.turn_on: shelly_relay_1
+        else:
+          - homeassistant.service:
+                service: scene.turn_on
+                data:
+                  entity_id: scene.stairs_temp
+                  transition: "5"
+          - homeassistant.service:
+              service: homeassistant.toggle
+              data: 
+                entity_id: light.stairs
+    
+  - platform: gpio
+    pin:
+      number: GPIO13
+    name: ${channel_2} Switch
+    on_state:
+      then:
+        - switch.toggle: shelly_relay_2

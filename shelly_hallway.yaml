@@ -1,0 +1,38 @@
+substitutions:
+  devicename: shelly-hallway
+  formated_name: Shelly Hallway
+  ip_address: 10.0.2.200
+  # Name for the relays
+  channel_1: Hallway
+
+esphome:
+  name: ${devicename}
+  platform: ESP8266
+  board: esp01_1m
+
+<<: !include common/common.yaml
+
+# Device Specific Config
+output:
+  - platform: gpio
+    pin: GPIO4
+    id: shelly_hallway_relay
+
+light:
+  - platform: binary
+    name: "Hallway Light"
+    output: shelly_hallway_relay
+    id: lightid
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO5
+      #mode: INPUT_PULLUP
+      #inverted: True
+    name: ${channel_1} Switch
+    on_state:
+      then:
+        - light.toggle: lightid
+    internal: true
+    id: switchid
