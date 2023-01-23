@@ -1,0 +1,322 @@
+substitutions:
+  led_gpio: GPIO13
+  rel1_gpio: GPIO12
+  rel2_gpio: GPIO5
+  rel3_gpio: GPIO4
+  rel4_gpio: GPIO15
+  key1_gpio: GPIO0
+  key2_gpio: GPIO9
+  key3_gpio: GPIO10
+  key4_gpio: GPIO14
+  rx_gpio: GPIO3
+  tx_gpio: GPIO1
+  sda_gpio: GPIO2
+
+  devicename: sonoff-irrigation-a
+  formated_name: Sonoff Irrigation A
+  ip_address: 10.0.2.103
+  comment: |- 
+    Irrigation controller A. 
+    Mounted on the green garden backyarn and controlling front yard plus the green garden.
+
+    Location: Green Garden Backyard
+    Device: Sonoff 4ch R3
+
+<<: !include common/esphome/esp01_1m_irrigation.yaml
+
+<<: !include common/common.yaml
+
+i2c:
+  sda: $sda_gpio
+  scl: $tx_gpio
+  scan: True
+  id: bus_a
+
+display:
+  - platform: ssd1306_i2c
+    id: oled
+    model: "SSD1306 128x64"
+    # reset_pin: D0
+    address: 0x3C
+    # lambda: |-
+    #   // Print "Alarm State: <state>" in top center
+    #   if(id(controller).active_valve().has_value()) {
+    #     it.printf(64, 0, id(opensans), TextAlign::TOP_CENTER, "Running Zone: %i", id(controller).active_valve().value());
+    #     it.printf(0, 60, id(opensans32), TextAlign::BASELINE_LEFT, "%i", id(controller).time_remaining().value());
+    #   }
+    #   else {
+    #     it.printf(64, 0, id(opensans), TextAlign::TOP_CENTER, "Idle");
+    #   }
+    pages:
+      - id: home_page
+        lambda: |-
+          it.printf(64, 0, id(opensans), TextAlign::TOP_CENTER, "Sprinkler controller");
+      - id: zone_page
+        lambda: |-
+          if(id(controller).active_valve().has_value()) {
+            int active_valve = id(controller).active_valve().value();
+
+            it.printf(64, 0, id(opensans), TextAlign::TOP_CENTER, "Zone: %i - %s", active_valve, id(controller).valve_name(active_valve));
+
+            it.printf(0, 60, id(opensans32), TextAlign::BASELINE_LEFT, 
+              "%02d:%02d", 
+              id(controller).time_remaining().value()/60, id(controller).time_remaining().value()%60);
+            it.printf(127, 23, id(opensans14), TextAlign::TOP_RIGHT,
+               "%02d:%02d", 
+              id(controller).valve_run_duration_adjusted(active_valve)/60, 
+              id(controller).valve_run_duration_adjusted(active_valve)%60);
+          }
+          else {
+            int valve_id = id(current_zone) - 1;
+            it.printf(64, 0, id(opensans), TextAlign::TOP_CENTER, "Zone: %i - %s", id(current_zone), id(controller).valve_name(valve_id));
+            it.printf(127, 23, id(opensans14), TextAlign::TOP_RIGHT,
+               "%02d:%02d", 
+              id(controller).valve_run_duration_adjusted(valve_id)/60, 
+              id(controller).valve_run_duration_adjusted(valve_id)%60);
+          }
+          
+
+font:
+  - file: 'fonts/OpenSans-Regular.ttf'
+    id: opensans
+    size: 12
+  - file: 'fonts/OpenSans-Regular.ttf'
+    id: opensans32
+    size: 32
+  - file: 'fonts/OpenSans-Regular.ttf'
+    id: opensans14
+    size: 14
+
+logger:
+  level: VERBOSE
+
+status_led:
+  pin:
+    number: $led_gpio
+    inverted: True
+
+switch:
+  - platform: gpio
+    id: relay1
+    name: "irrigation_relay1"
+    pin: $rel1_gpio
+    internal: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: gpio
+    id: relay2
+    name: "irrigation_relay2"
+    pin: $rel2_gpio
+    internal: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: gpio
+    id: relay3
+    name: "irrigation_relay3"
+    pin: $rel3_gpio
+    internal: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: gpio
+    id: relay4
+    name: "irrigation_relay4"
+    pin: $rel4_gpio
+    internal: true
+    restore_mode: RESTORE_DEFAULT_OFF
+
+globals:
+   - id: current_zone
+     type: int
+     restore_value: no
+    #  initial_value: 0
+
+interval:
+  - interval: 1s
+    then:
+      - if:
+          condition:
+            lambda: |-
+              return !id(controller).active_valve().has_value();
+          then:
+            - delay: 3s
+            - display.page.show: !lambda |-
+                return id(home_page);
+      - if:
+          condition:
+            lambda: |-
+              return id(controller).active_valve().has_value();
+          then:
+            - display.page.show: !lambda |-
+                return id(zone_page);
+
+binary_sensor:
+  - platform: gpio
+    id: key1
+    pin:
+      number: $key1_gpio
+      mode: INPUT_PULLUP
+      inverted: True
+    filters:
+      - delayed_on: 100ms
+    on_press:
+      then:
+        - globals.set:
+            id: current_zone
+            value: '1'
+        - display.page.show: !lambda |-
+            return id(zone_page);
+    on_multi_click:
+      timing:
+        - ON for at least 2s
+      then:
+        - lambda: 'toggle(1,controller);'
+  - platform: gpio
+    id: key2
+    pin:
+      number: $key2_gpio
+      mode: INPUT_PULLUP
+      inverted: True
+    filters:
+      - delayed_on: 100ms
+    on_press:
+      then:
+        - globals.set:
+            id: current_zone
+            value: '2'
+        - display.page.show: !lambda |-
+            return id(zone_page);
+    on_multi_click:
+      timing:
+        - ON for at least 2s
+      then:
+        - lambda: 'toggle(2,controller);'
+  - platform: gpio
+    id: key3
+    pin:
+      number: $key3_gpio
+      mode: INPUT_PULLUP
+      inverted: True
+    filters:
+      - delayed_on: 100ms
+    on_press:
+      then:
+        - globals.set:
+            id: current_zone
+            value: '3'
+        - display.page.show: !lambda |-
+            return id(zone_page);
+    on_multi_click:
+      timing:
+        - ON for at least 2s
+      then:
+        - lambda: 'toggle(3,controller);'
+  - platform: gpio
+    id: key4
+    pin:
+      number: $key4_gpio
+      mode: INPUT_PULLUP
+      inverted: True
+    filters:
+      - delayed_on: 100ms
+    on_press:
+      then:
+        - globals.set:
+            id: current_zone
+            value: '4'
+        - display.page.show: !lambda |-
+            return id(zone_page);
+    on_multi_click:
+      timing:
+        - ON for at least 2s
+      then:
+        - lambda: 'toggle(4,controller);'
+
+# sensor:
+#   - platform: template
+#     name: "Active Valve Time Remaining"
+#     lambda: |-
+#       return id(controller).time_remaining();
+#     update_interval: 1s
+#   - platform: template
+#     name: "Active Valve Time Remaining 2"
+#     lambda: |-
+#       return id(controller).valve_run_duration(1);
+#     update_interval: 10s
+
+# text_sensor:
+#   - platform: template
+#     id: active_valve_name
+#     name: "Active Valve"
+
+sprinkler:
+  - id: controller
+    main_switch: "Irrigation A"
+    auto_advance_switch: "Auto Advance"
+    valves:
+      - valve_switch: "Pasto calle"
+        valve_switch_id: relay1
+        enable_switch: Valve 1 Enabled
+        run_duration: 5s
+      - valve_switch: "Plantas jardineras"
+        valve_switch_id: relay2
+        enable_switch: Valve 2 Enabled
+        run_duration: 2s
+      - valve_switch: "Platans patio"
+        valve_switch_id: relay3
+        enable_switch: Valve 3 Enabled
+        run_duration: 3s
+      - valve_switch: "Huerto"
+        valve_switch_id: relay4
+        enable_switch: Valve 4 Enabled
+        run_duration: 4s      
+
+number:
+  - id: valve_1_duration
+    platform: template
+    name: "Valve 1 duration"
+    min_value: 1
+    max_value: 30
+    step: 1.0
+    mode: box
+    lambda: 'return id(controller).valve_run_duration(0) / 60;'
+    set_action:
+      - sprinkler.set_valve_run_duration:
+          id: controller
+          valve_number: 0
+          run_duration: !lambda "return x * 60;"
+  - id: valve_2_duration
+    platform: template
+    name: "Valve 2 duration"
+    min_value: 1
+    max_value: 30
+    step: 1.0
+    mode: box
+    lambda: 'return id(controller).valve_run_duration(1) / 60;'
+    set_action:
+      - sprinkler.set_valve_run_duration:
+          id: controller
+          valve_number: 1
+          run_duration: !lambda 'return x * 60;'
+  - id: valve_3_duration
+    platform: template
+    name: "Valve 3 duration"
+    min_value: 1
+    max_value: 30
+    step: 1.0
+    mode: box
+    lambda: 'return id(controller).valve_run_duration(2) / 60;'
+    set_action:
+      - sprinkler.set_valve_run_duration:
+          id: controller
+          valve_number: 2
+          run_duration: !lambda 'return x * 60;'
+  - id: valve_4_duration
+    platform: template
+    name: "Valve 4 duration"
+    min_value: 1
+    max_value: 30
+    step: 1.0
+    mode: box
+    lambda: 'return id(controller).valve_run_duration(3) / 60;'
+    set_action:
+      - sprinkler.set_valve_run_duration:
+          id: controller
+          valve_number: 3
+          run_duration: !lambda 'return x * 60;'
