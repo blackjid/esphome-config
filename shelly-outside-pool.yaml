@@ -1,0 +1,123 @@
+substitutions:
+  devicename: shelly-outside-pool
+  devicetype: shelly 1pm
+  formated_name: Shelly Outside Pool
+  ip_address: 10.0.2.140
+  # Name for the relays
+  channel_1: Outside
+  channel_2: Terrace 2
+  max_power: "2000.0" # watt
+  max_temp: "70.0" # °C
+  
+<<: !include common/esphome/esp01_1m.yaml
+
+<<: !include common/common.yaml
+
+# switch:
+#   - platform: gpio
+#     name: ${devicename}
+#     pin: GPIO15
+#     id: shelly_relay
+#     restore_mode: RESTORE_DEFAULT_OFF
+
+sensor:
+  # Reports how long the device has been powered (in hours) since last reboot
+  - platform: uptime
+    name: ${formated_name} Uptime
+    update_interval: 60s
+    filters:
+      - lambda: return x / 3600;
+    unit_of_measurement: "h"
+  - platform: wifi_signal
+    name: "${formated_name} Wifi Signal"
+    update_interval: 60s
+  - platform: hlw8012
+    cf_pin: GPIO05
+    cf1_pin: GPIO13 # not used because it is not available on the 1PM but it is needed to compile
+    sel_pin: GPIO14 # not used because it is not available on the 1PM but it is needed to compile
+    power:
+      name: "${devicename} power"
+      unit_of_measurement: W
+      id: "shelly1pm_power"
+      device_class: power
+      state_class: measurement
+      accuracy_decimals: 0
+      filters:
+      # Map from sensor -> measured value
+      - calibrate_linear:
+          - 0.0 -> 1.0
+          - 110.33186 -> 20.62
+          - 131.01909 -> 24.32
+          - 341.33920 -> 62.08
+          - 5561.41553 -> 1000.0
+          - 2975.51221 -> 535.7
+          - 9612.66309 -> 1720.0
+          - 14891.35352 -> 2679.0
+      # Make everything below 2W appear as just 0W.
+      - lambda: if (x < 2) return 0; else return x;
+    update_interval: 10s
+
+  - platform: total_daily_energy
+    name: "${devicename} energy"
+    power_id: "shelly1pm_power"
+    device_class: energy
+    state_class: measurement
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: kWh
+
+  - platform: ntc
+    sensor: temp_resistance_reading
+    name: "${devicename} temperature"
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    device_class: temperature
+    calibration:
+      b_constant: 3350
+      reference_resistance: 10kOhm
+      reference_temperature: 298.15K
+    on_value_range:
+      - above: ${max_temp}
+        then:
+          - light.turn_off: lightid1
+          - homeassistant.event:
+              event: esphome.overheat
+              data:
+                title: "${devicename} has overheated."
+  - platform: resistance
+    id: temp_resistance_reading
+    sensor: temp_analog_reading
+    configuration: DOWNSTREAM
+    resistor: 32kOhm
+  - platform: adc
+    id: temp_analog_reading
+    pin: A0
+
+output:
+  - platform: gpio
+    pin: GPIO15
+    id: shelly_relay
+  - platform: esp8266_pwm
+    id: state_led
+    pin:
+      number: GPIO00
+      inverted: true
+
+light:
+  - platform: binary
+    name: "${channel_1}"
+    output: shelly_relay
+    id: lightid1
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO4
+    filters:
+      - delayed_on_off: 50ms # small delay to prevent debouncing
+    name: "Switch ${devicename}"
+    on_state:
+      then:
+        - light.toggle: lightid1
+    internal: true
+    id: switchid

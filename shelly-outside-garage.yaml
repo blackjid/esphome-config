@@ -1,11 +1,11 @@
 substitutions:
-  devicename: shelly-terrace
+  devicename: shelly-outside-garage
   devicetype: shelly 2.5
-  formated_name: Shelly Terrace
-  ip_address: 10.0.2.159
+  formated_name: Shelly Outside Garage
+  ip_address: 10.0.2.49
   # Name for the relays
-  channel_1: Terrace Wall
-  channel_2: Terrace Table
+  channel_1: Garage / Green Garden
+  channel_2: Terrace
   max_power: "2000.0" # watt
   max_temp: "83.0" # °C
   
@@ -140,20 +140,6 @@ light:
     name: "${channel_2}"
     output: shelly_25_relay_2
     id: lightid2
-
-switch:
-  - platform: gpio
-    id: shelly_relay_1
-    name: ${channel_1} relay
-    pin: GPIO15
-    icon: "mdi:electric-switch"
-    restore_mode: RESTORE_DEFAULT_OFF
-  - platform: gpio
-    id: shelly_relay_2
-    name: ${channel_2} relay
-    pin: GPIO4
-    icon: "mdi:electric-switch"
-    restore_mode: RESTORE_DEFAULT_OFF
 
 binary_sensor:
   - platform: gpio

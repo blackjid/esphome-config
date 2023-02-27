@@ -1,0 +1,142 @@
+substitutions:
+  devicename: sonoff-nspanel
+  formated_name: Sonoff NSPanel
+  ip_address: 10.0.2.83
+  
+# esphome:
+#   name: sonoff-nspanel
+#   comment: sonoff-nspanel
+
+<<: !include common/esphome/esp32dev.yaml
+
+<<: !include common/common.yaml
+
+# Logger. Disable the temperature sensor etc. to focus on the HMI development
+logger:
+  baud_rate: 0
+  level: DEBUG
+  logs:
+    sensor: WARN
+    resistance: WARN
+    text_sensor: WARN
+    ntc: WARN
+    
+# Uart for the Nextion display
+uart:
+  id: tf_uart
+  tx_pin: 16
+  rx_pin: 17
+  baud_rate: 115200
+  
+# Functionality for the Nextion display
+external_components:
+  - source: github://pr#2956
+    components: [nextion]
+    refresh: 1h
+    
+api:
+  password: !secret api_password
+  services:
+    # Service to play a song
+    - service: play_rtttl
+      variables:
+        song_str: string
+      then:
+        - rtttl.play:
+            rtttl: !lambda 'return song_str;'
+    - service: upload_tft
+      then:
+        - lambda: 'id(disp1).upload_tft();'
+    - service: send_command
+      variables:
+        cmd: string
+      then:
+        - lambda: 'id(disp1).send_command_printf("%s", cmd.c_str());'
+
+# A reboot button is always useful
+button:
+  - platform: restart
+    name: 4devicename Restart
+
+# Binary sensors
+# binary_sensor:
+#   # Left button below the display
+#   - platform: gpio
+#     name: $device_name Left Button
+#     pin:
+#       number: 14
+#       inverted: true
+#     on_click:
+#       - switch.toggle: relay_1
+
+#   # Right button below the display
+#   - platform: gpio
+#     name: $device_name Right Button
+#     pin:
+#       number: 27
+#       inverted: true
+#     on_click:
+#       - switch.toggle: relay_2
+
+number:
+  platform: template
+  name: $device_name Brightness
+  id: brightness
+  entity_category: config
+  unit_of_measurement: '%'
+  min_value: 0
+  max_value: 100
+  step: 1
+  initial_value: 25
+  set_action:
+    then:
+      - lambda: 'id(disp1).set_backlight_brightness(x/100);'
+
+# Configure the internal bleeper
+output:
+  - platform: ledc
+    id: buzzer_out
+    pin:
+      number: 21
+      
+switch:
+  # Turn screen power on/off. Easy way to configure the screen power control, but this should not be used from HA, as all components must be re-initialized afterwards. For lights, names of lights etc. this practically means that the state must change once to happen.  - platform: gpio
+  - platform: gpio  
+    name: $device_name Screen Power
+    id: screen_power
+    entity_category: config
+    pin:
+      number: 4
+      inverted: true
+    restore_mode: ALWAYS_ON
+  # Basically a global variable to keep track on whether the Nextion display is ready or not. Delays initial info from HA to the display.
+  - platform: template
+    name: $device_name Nextion inited
+    id: nextion_init
+    entity_category: config
+    restore_state: false
+    assumed_state: off
+    optimistic: true
+
+# Enable ringtone music support
+rtttl:
+  id: buzzer
+  output: buzzer_out
+      
+# Configure the screen itself
+display:
+  - platform: nextion
+    id: disp1
+    uart_id: tf_uart
+    tft_url: http://10.0.2.231:8000/hmi.tft
+    on_setup:
+      then:
+        - number.set:
+            id: brightness
+            value: 25
+        # - lambda: |-
+        #     id(disp1).set_component_text_printf(
+        #       "temp", "%.1f ""\xb0""F", id(current_temperature).state
+        #     );
+        # A little fun...
+        - rtttl.play: "startup:d=16,o=5,b=180:c,e,g,c6,8p,c,16p,e,c"

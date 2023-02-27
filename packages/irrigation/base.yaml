@@ -1,0 +1,153 @@
+switch:
+  - platform: gpio
+    id: relay1
+    name: "irrigation_relay1"
+    pin: $rel1_gpio
+    internal: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: gpio
+    id: relay2
+    name: "irrigation_relay2"
+    pin: $rel2_gpio
+    internal: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: gpio
+    id: relay3
+    name: "irrigation_relay3"
+    pin: $rel3_gpio
+    internal: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: gpio
+    id: relay4
+    name: "irrigation_relay4"
+    pin: $rel4_gpio
+    internal: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: restart
+    name: "Restart"
+
+logger:
+  level: VERBOSE
+
+status_led:
+  pin:
+    number: $led_gpio
+    inverted: True
+
+# binary_sensor:
+#   - platform: gpio
+#     id: key1
+#     pin:
+#       number: $key1_gpio
+#       mode: INPUT_PULLUP
+#       inverted: True
+#     filters:
+#       - delayed_on: 100ms
+#     on_press:
+#       then:
+#         - lambda: 'toggle(1,controller);'
+#   - platform: gpio
+#     id: key2
+#     pin:
+#       number: $key2_gpio
+#       mode: INPUT_PULLUP
+#       inverted: True
+#     filters:
+#       - delayed_on: 100ms
+#     on_press:
+#       then:
+#         - lambda: 'toggle(2,controller);'
+#   - platform: gpio
+#     id: key3
+#     pin:
+#       number: $key3_gpio
+#       mode: INPUT_PULLUP
+#       inverted: True
+#     filters:
+#       - delayed_on: 100ms
+#     on_press:
+#       then:
+#         - lambda: 'toggle(3,controller);'
+#   - platform: gpio
+#     id: key4
+#     pin:
+#       number: $key4_gpio
+#       mode: INPUT_PULLUP
+#       inverted: True
+#     filters:
+#       - delayed_on: 100ms
+#     on_press:
+#       then:
+#         - lambda: 'toggle(4,controller);'
+
+
+# number:
+#   - id: valve_1_duration
+#     platform: template
+#     name: "Valve 1 duration"
+#     min_value: 1
+#     max_value: 30
+#     step: 1.0
+#     mode: box
+#     lambda: 'return id(controller).valve_run_duration(0) / 60;'
+#     set_action:
+#       - sprinkler.set_valve_run_duration:
+#           id: controller
+#           valve_number: 0
+#           run_duration: !lambda "return x * 60;"
+#   - id: valve_2_duration
+#     platform: template
+#     name: "Valve 2 duration"
+#     min_value: 1
+#     max_value: 30
+#     step: 1.0
+#     mode: box
+#     lambda: 'return id(controller).valve_run_duration(1) / 60;'
+#     set_action:
+#       - sprinkler.set_valve_run_duration:
+#           id: controller
+#           valve_number: 1
+#           run_duration: !lambda 'return x * 60;'
+#   - id: valve_3_duration
+#     platform: template
+#     name: "Valve 3 duration"
+#     min_value: 1
+#     max_value: 30
+#     step: 1.0
+#     mode: box
+#     lambda: 'return id(controller).valve_run_duration(2) / 60;'
+#     set_action:
+#       - sprinkler.set_valve_run_duration:
+#           id: controller
+#           valve_number: 2
+#           run_duration: !lambda 'return x * 60;'
+#   - id: valve_4_duration
+#     platform: template
+#     name: "Valve 4 duration"
+#     min_value: 1
+#     max_value: 30
+#     step: 1.0
+#     mode: box
+#     lambda: 'return id(controller).valve_run_duration(3) / 60;'
+#     set_action:
+#       - sprinkler.set_valve_run_duration:
+#           id: controller
+#           valve_number: 3
+#           run_duration: !lambda 'return x * 60;'
+
+# sensor:
+#   - platform: template
+#     name: "Active Valve Time Remaining"
+#     lambda: |-
+#       return id(controller).time_remaining();
+#     update_interval: 1s
+#   - platform: template
+#     name: "Active Valve Time Remaining 2"
+#     lambda: |-
+#       return id(controller).valve_run_duration(1);
+#     update_interval: 10s
+
+# text_sensor:
+#   - platform: template
+#     id: active_valve_name
+#     name: "Active Valve"   

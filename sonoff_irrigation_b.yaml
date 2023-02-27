@@ -1,0 +1,116 @@
+substitutions:
+  led_gpio: GPIO13
+  rel1_gpio: GPIO12
+  rel2_gpio: GPIO5
+  rel3_gpio: GPIO4
+  rel4_gpio: GPIO15
+  key1_gpio: GPIO0
+  key2_gpio: GPIO9
+  key3_gpio: GPIO10
+  key4_gpio: GPIO14
+  rx_gpio: GPIO3
+  tx_gpio: GPIO1
+
+  valve_switch_1_name: Huerto
+  valve_switch_1_duration: 60s
+
+  valve_switch_2_name: Jardineras Estacionamiento
+  valve_switch_2_duration: 600s
+
+  valve_switch_3_name: Jardin Entrada - Goteo
+  valve_switch_3_duration: 600s
+  
+  valve_switch_4_name: Pasto Antejardin
+  valve_switch_4_duration: 300s
+
+  devicename: sonoff-irrigation-b
+  formated_name: Sonoff Irrigation B
+  ip_address: 10.0.2.160
+  comment: |- 
+    Irrigation controller B. 
+    Mounted on the green garden backyarn and controlling front yard plus the green garden.
+
+    Location: Green Garden Backyard
+    Device: Sonoff 4ch R3
+
+<<: !include common/esphome/esp01_1m_irrigation.yaml
+
+<<: !include common/common.yaml
+
+<<: !include packages/irrigation/base.yaml
+
+sprinkler:
+  - id: greengarden
+    valves:
+      - valve_switch: Greengarden - $valve_switch_1_name Run
+        valve_switch_id: relay1
+        run_duration: $valve_switch_1_duration 
+  - id: frontyard
+    main_switch: "Frontyard Run-all"
+    auto_advance_switch: "Frontyard Auto Cycle Enabled"
+    valves:
+      - valve_switch: Frontyard - $valve_switch_2_name Run
+        valve_switch_id: relay2
+        enable_switch: Frontyard - $valve_switch_2_name Cycle Enabled
+        run_duration: $valve_switch_2_duration
+      - valve_switch: Frontyard - $valve_switch_3_name Run
+        valve_switch_id: relay3
+        enable_switch: Frontyard - $valve_switch_3_name Cycle Enabled
+        run_duration: $valve_switch_3_duration
+      - valve_switch: Frontyard - $valve_switch_4_name Run
+        valve_switch_id: relay4
+        enable_switch: Frontyard - $valve_switch_4_name Cycle Enabled
+        run_duration: $valve_switch_4_duration
+
+sensor:
+  # Reports how long the device has been powered (in hours) since last reboot
+  - platform: uptime
+    name: ${formated_name} Uptime
+    update_interval: 60s
+    filters:
+      - lambda: return x / 3600;
+    unit_of_measurement: "h"
+  - platform: wifi_signal
+    name: "${formated_name} Wifi Signal"
+    update_interval: 60s
+
+time:
+  - platform: sntp
+    id: backyard_start_time
+    # ...
+    on_time:
+      # Every morning on weekdays
+      - seconds: 0
+        minutes: 00
+        hours: 21
+        then:
+          - sprinkler.start_full_cycle: frontyard
+      # Every morning on weekdays
+      - seconds: 0
+        minutes: 00
+        hours: 20
+        then:
+          - sprinkler.start_full_cycle: greengarden
+
+# sensor:
+#   - platform: template
+#     name: "Active Valve Time Remaining"
+#     lambda: |-
+#       return id(controller).time_remaining();
+#     update_interval: 1s
+#   - platform: template
+#     name: "Active Valve Time Remaining 2"
+#     lambda: |-
+#       return id(controller).valve_run_duration(1);
+#     update_interval: 10s
+
+# text_sensor:
+#   - platform: template
+#     id: active_valve_name
+#     name: "Active Valve"   
+
+# globals:
+#    - id: my_global_int_hour
+#      type: int
+#      restore_value: yes
+#      initial_value: '19'

@@ -1,0 +1,13 @@
+---
+esphome:
+  name: ${devicename}
+
+esp32:
+  board: nodemcu-32s
+  framework:
+    type: esp-idf
+    version: recommended
+    sdkconfig_options:
+      CONFIG_COMPILER_OPTIMIZATION_SIZE: y
+    advanced:
+      ignore_efuse_mac_crc: true

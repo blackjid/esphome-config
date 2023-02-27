@@ -2,6 +2,7 @@ substitutions:
   devicename: shelly-bedroom
   formated_name: Shelly Bedroom
   ip_address: 10.0.2.253
+  comment: Placed in the master bedroom and control main lights
   # Name for the relays
   channel_1: Bedroom
 

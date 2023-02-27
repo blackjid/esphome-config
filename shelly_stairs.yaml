@@ -59,7 +59,7 @@ sensor:
       on_value_range:
         - above: ${max_power}
           then:
-            - switch.turn_off: shelly_relay_2
+            - light.turn_off: shelly_relay_2
             - homeassistant.service:
                 service: persistent_notification.create
                 data:
@@ -99,7 +99,7 @@ sensor:
       - above: ${max_temp}
         then:
           - switch.turn_off: shelly_relay_1
-          - switch.turn_off: shelly_relay_2
+          - light.turn_off: shelly_relay_2
           - homeassistant.service:
               service: persistent_notification.create
               data:
@@ -120,19 +120,31 @@ status_led:
     number: GPIO0
     inverted: yes
 
+output:
+  - platform: gpio
+    pin: GPIO4
+    id: shelly_family_room_relay
+
 switch:
   - platform: gpio
     id: shelly_relay_1
     name: ${channel_1} relay
+    internal: true
     pin: GPIO15
     icon: "mdi:electric-switch"
     restore_mode: ALWAYS_ON
-  - platform: gpio
+  # - platform: gpio
+  #   id: shelly_relay_2
+  #   name: ${channel_2} relay
+  #   pin: GPIO4
+  #   icon: "mdi:electric-switch"
+  #   restore_mode: RESTORE_DEFAULT_OFF
+
+light:
+  - platform: binary
+    name: "Family Room Light"
+    output: shelly_family_room_relay
     id: shelly_relay_2
-    name: ${channel_2} relay
-    pin: GPIO4
-    icon: "mdi:electric-switch"
-    restore_mode: RESTORE_DEFAULT_OFF
 
 binary_sensor:
   - platform: gpio
@@ -142,8 +154,9 @@ binary_sensor:
 
   - platform: gpio
     pin:
-      number: GPIO5
+      number: GPIO13
     name: ${channel_1} Switch
+    internal: true
     on_double_click:
       min_length: 50ms
       max_length: 350ms
@@ -175,11 +188,12 @@ binary_sensor:
               service: homeassistant.toggle
               data: 
                 entity_id: light.stairs
-    
+
   - platform: gpio
     pin:
-      number: GPIO13
+      number: GPIO5
     name: ${channel_2} Switch
+    internal: true
     on_state:
       then:
-        - switch.toggle: shelly_relay_2
+        - light.toggle: shelly_relay_2
