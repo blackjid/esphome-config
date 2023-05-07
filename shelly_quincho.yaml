@@ -1,14 +1,14 @@
 substitutions:
-  devicename: shelly-terrace-outside
+  devicename: shelly-quincho
   devicetype: shelly 2.5
-  formated_name: Shelly Terrace Outside
+  formated_name: Shelly Quincho
   ip_address: 10.0.2.235
   # Name for the relays
-  channel_1: Outside
-  channel_2: Terrace 2
+  channel_1: Ceiling
+  channel_2: Table
   max_power: "2000.0" # watt
   max_temp: "83.0" # °C
-  
+
 <<: !include common/esphome/esp01_1m.yaml
 
 <<: !include common/common.yaml
