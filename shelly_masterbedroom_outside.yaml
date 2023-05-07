@@ -1,14 +1,17 @@
 substitutions:
-  devicename: shelly-outside-garage
+  devicename: shelly-masterbedroom-outside
   devicetype: shelly 2.5
-  formated_name: Shelly Outside Garage
+  formated_name: Shelly Master Bedroom Outside
   ip_address: 10.0.2.49
   # Name for the relays
-  channel_1: Garage / Green Garden
-  channel_2: Terrace
+  channel_1: Garage / Green Garden Sconces
+  channel_2: Terrace Sconces 2
   max_power: "2000.0" # watt
   max_temp: "83.0" # °C
-  
+
+  comment: |-
+    Placed in the master bedroom near the window and control outside lights
+
 <<: !include common/esphome/esp01_1m.yaml
 
 <<: !include common/common.yaml
