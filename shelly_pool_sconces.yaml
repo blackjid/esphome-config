@@ -1,14 +1,16 @@
 substitutions:
-  devicename: shelly-outside-pool
+  devicename: shelly-pool-sconces
+  formated_name: Shelly Pool Sconces
   devicetype: shelly 1pm
-  formated_name: Shelly Outside Pool
+  device_location: pool
   ip_address: 10.0.2.140
   # Name for the relays
-  channel_1: Outside
-  channel_2: Terrace 2
+  channel_1: Pool Sconces
   max_power: "2000.0" # watt
   max_temp: "70.0" # °C
-  
+  comment: |-
+    Shelly on the pool filter control the Wall Sconces. No binary sensor used in the shelly itself.
+
 <<: !include common/esphome/esp01_1m.yaml
 
 <<: !include common/common.yaml
@@ -105,7 +107,7 @@ output:
 
 light:
   - platform: binary
-    name: "${channel_1}"
+    name: "${channel_1} Lights"
     output: shelly_relay
     id: lightid1
 
