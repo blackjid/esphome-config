@@ -1,18 +1,19 @@
 substitutions:
-  devicename: shelly-pool-back
-  formated_name: Shelly Pool Back
+  devicename: shelly-pool-light-back
+  formated_name: Shelly Pool Light Back
   ip_address: 10.0.2.236
-  comment: Location in the master bedroom and control main lights
   # Name for the relays
-  channel_1: Stairs
-  channel_2: Family Room
+  channel_1: Back
   max_power: "2000.0" # watt
   max_temp: "83.0" # °C
+
+  comment: |-
+    Location in the pool filter and controls the rgb lights on the back of the pool
 
 <<: !include common/esphome/esp01_1m.yaml
 
 <<: !include common/common.yaml
-    
+
 sensor:
   # Reports how long the device has been powered (in hours) since last reboot
   - platform: uptime
@@ -31,7 +32,7 @@ sensor:
 
 light:
   - platform: rgb
-    name: "Pool Lights Back"
+    name: "Pool Lights ${channel_1}"
     red: pwm_r
     green: pwm_g
     blue: pwm_b

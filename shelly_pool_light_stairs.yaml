@@ -1,18 +1,30 @@
 substitutions:
-  devicename: shelly-pool-stairs
-  formated_name: Shelly Pool Stairs
+  devicename: shelly-pool-ligth-stairs
+  formated_name: Shelly Pool Light Stairs
   ip_address: 10.0.2.237
   # Name for the relays
   channel_1: Stairs
-  channel_2: Family Room
   max_power: "2000.0" # watt
   max_temp: "83.0" # °C
-  
+
+  comment: |-
+    Location in the pool filter and controls the rgb lights on the back of the pool
+
 <<: !include common/esphome/esp01_1m.yaml
 
 <<: !include common/common.yaml
 
 sensor:
+  # Reports how long the device has been powered (in hours) since last reboot
+  - platform: uptime
+    name: ${formated_name} Uptime
+    update_interval: 60s
+    filters:
+      - lambda: return x / 3600;
+    unit_of_measurement: "h"
+  - platform: wifi_signal
+    name: "${formated_name} Wifi Signal"
+    update_interval: 60s
   - platform: adc
     pin: A0
     name: "${formated_name} Power"
@@ -20,7 +32,7 @@ sensor:
 
 light:
   - platform: rgb
-    name: "Pool Lights Stairs"
+    name: "Pool Lights ${channel_1}"
     red: pwm_r
     green: pwm_g
     blue: pwm_b
