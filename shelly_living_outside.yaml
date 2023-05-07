@@ -1,14 +1,14 @@
 substitutions:
-  devicename: shelly-terrace
+  devicename: shelly-living-outside
   devicetype: shelly 2.5
-  formated_name: Shelly Terrace
+  formated_name: Shelly Living Outside
   ip_address: 10.0.2.159
   # Name for the relays
-  channel_1: Terrace Wall
-  channel_2: Terrace Table
+  channel_1: Terrace Sconces 1
+  channel_2: Terrace Ceiling
   max_power: "2000.0" # watt
   max_temp: "83.0" # °C
-  
+
 <<: !include common/esphome/esp01_1m.yaml
 
 <<: !include common/common.yaml
