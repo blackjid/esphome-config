@@ -55,17 +55,4 @@ void conditional_off(switch_::Switch *relay, sprinkler::Sprinkler *sprinkler) {
   }
 }
 
-/*
- * Format remaining time of the curent valve as a string (minute:second)
- */
-std::string remaining_time(sprinkler::Sprinkler *sprinkler) {
-  uint32_t remaining_time = id(sprinkler).time_remaining().value_or(0);
-  if (remaining_time == 0) {
-    return "";
-  }
-  char result[12];
-  sprintf(result, "%02d:%02d", (int)(remaining_time / 60),
-          (int)(remaining_time % 60));
-  return result;
-}
 }  // namespace esphome

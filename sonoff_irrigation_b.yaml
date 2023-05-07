@@ -11,23 +11,16 @@ substitutions:
   rx_gpio: GPIO3
   tx_gpio: GPIO1
 
-  valve_switch_1_name: Huerto
-  valve_switch_1_duration: 60s
-
-  valve_switch_2_name: Jardineras Estacionamiento
-  valve_switch_2_duration: 600s
-
-  valve_switch_3_name: Jardin Entrada - Goteo
-  valve_switch_3_duration: 600s
-  
-  valve_switch_4_name: Pasto Antejardin
-  valve_switch_4_duration: 300s
+  valve_switch_1_name: Greengarden - Huerto
+  valve_switch_2_name: Frontyard - Jardineras Estacionamiento
+  valve_switch_3_name: Frontyard - Jardin Entrada - Goteo
+  valve_switch_4_name: Frontyard - Pasto Antejardin
 
   devicename: sonoff-irrigation-b
   formated_name: Sonoff Irrigation B
   ip_address: 10.0.2.160
-  comment: |- 
-    Irrigation controller B. 
+  comment: |-
+    Irrigation controller B.
     Mounted on the green garden backyarn and controlling front yard plus the green garden.
 
     Location: Green Garden Backyard
@@ -40,27 +33,38 @@ substitutions:
 <<: !include packages/irrigation/base.yaml
 
 sprinkler:
-  - id: greengarden
-    valves:
-      - valve_switch: Greengarden - $valve_switch_1_name Run
-        valve_switch_id: relay1
-        run_duration: $valve_switch_1_duration 
   - id: frontyard
-    main_switch: "Frontyard Run-all"
-    auto_advance_switch: "Frontyard Auto Cycle Enabled"
+    main_switch: Frontyard Run-all
+    auto_advance_switch: Frontyard Auto Cycle Enabled
     valves:
-      - valve_switch: Frontyard - $valve_switch_2_name Run
+      - valve_switch: $valve_switch_1_name Run
+        valve_switch_id: relay1
+        enable_switch: $valve_switch_1_name Cycle Enabled
+        run_duration_number:
+          name: $valve_switch_1_name Duration
+          initial_value: 2
+          unit_of_measurement: min
+      - valve_switch: $valve_switch_2_name Run
         valve_switch_id: relay2
-        enable_switch: Frontyard - $valve_switch_2_name Cycle Enabled
-        run_duration: $valve_switch_2_duration
-      - valve_switch: Frontyard - $valve_switch_3_name Run
+        enable_switch: $valve_switch_2_name Cycle Enabled
+        run_duration_number:
+          name: $valve_switch_2_name Duration
+          initial_value: 10
+          unit_of_measurement: min
+      - valve_switch: $valve_switch_3_name Run
         valve_switch_id: relay3
-        enable_switch: Frontyard - $valve_switch_3_name Cycle Enabled
-        run_duration: $valve_switch_3_duration
-      - valve_switch: Frontyard - $valve_switch_4_name Run
+        enable_switch: $valve_switch_3_name Cycle Enabled
+        run_duration_number:
+          name: $valve_switch_3_name Duration
+          initial_value: 10
+          unit_of_measurement: min
+      - valve_switch: $valve_switch_4_name Run
         valve_switch_id: relay4
-        enable_switch: Frontyard - $valve_switch_4_name Cycle Enabled
-        run_duration: $valve_switch_4_duration
+        enable_switch: $valve_switch_4_name Cycle Enabled
+        run_duration_number:
+          name: $valve_switch_4_name Duration
+          initial_value: 6
+          unit_of_measurement: min
 
 sensor:
   # Reports how long the device has been powered (in hours) since last reboot
@@ -75,9 +79,18 @@ sensor:
     update_interval: 60s
 
 time:
+  - platform: homeassistant
+    id: homeassistant_time
+    timezone: America/Santiago
+
   - platform: sntp
-    id: backyard_start_time
-    # ...
+    id: sntp_time
+    timezone: America/Santiago
+    on_time_sync:
+      then:
+        - logger.log:
+            level: INFO
+            format:  "Time synchronized"
     on_time:
       # Every morning on weekdays
       - seconds: 0
@@ -86,11 +99,11 @@ time:
         then:
           - sprinkler.start_full_cycle: frontyard
       # Every morning on weekdays
-      - seconds: 0
-        minutes: 00
-        hours: 20
-        then:
-          - sprinkler.start_full_cycle: greengarden
+      # - seconds: 0
+      #   minutes: 00
+      #   hours: 20
+      #   then:
+      #     - sprinkler.start_full_cycle: greengarden
 
 # sensor:
 #   - platform: template
@@ -107,7 +120,7 @@ time:
 # text_sensor:
 #   - platform: template
 #     id: active_valve_name
-#     name: "Active Valve"   
+#     name: "Active Valve"
 
 # globals:
 #    - id: my_global_int_hour

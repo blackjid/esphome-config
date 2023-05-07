@@ -11,24 +11,17 @@ substitutions:
   rx_gpio: GPIO3
   tx_gpio: GPIO1
 
-  valve_switch_1_name: Terraza
-  valve_switch_1_duration: 420s
-
-  valve_switch_2_name: Jardinera Fondo
-  valve_switch_2_duration: 600s
-
-  valve_switch_3_name: Pasto Shine
-  valve_switch_3_duration: 600s
-  
-  valve_switch_4_name: Pasto Shade
-  valve_switch_4_duration: 180s
+  valve_switch_1_name: Backyard - Terraza
+  valve_switch_2_name: Backyard - Jardinera Fondo
+  valve_switch_3_name: Backyard - Pasto Shine
+  valve_switch_4_name: Backyard - Pasto Shade
 
 
   devicename: sonoff-irrigation-a
   formated_name: Sonoff Irrigation A
   ip_address: 10.0.2.103
-  comment: |- 
-    Irrigation controller A. 
+  comment: |-
+    Irrigation controller A.
     Mounted on the green garden backyarn and controlling front yard plus the green garden.
 
     Location: Green Garden Backyard
@@ -42,25 +35,37 @@ substitutions:
 
 sprinkler:
   - id: backyard
-    main_switch: "Backyard Run-all"
-    auto_advance_switch: "Backyard Auto Cycle Enabled"
+    main_switch: Backyard Run-all
+    auto_advance_switch: Backyard Auto Cycle Enabled
     valves:
-      - valve_switch: Backyard - $valve_switch_1_name Run
+      - valve_switch: $valve_switch_1_name Run
         valve_switch_id: relay1
-        enable_switch: Backyard - $valve_switch_1_name Cycle Enabled
-        run_duration: $valve_switch_1_duration
-      - valve_switch: Backyard - $valve_switch_2_name Run
+        enable_switch: $valve_switch_1_name Cycle Enabled
+        run_duration_number:
+          name: $valve_switch_1_name Duration
+          initial_value: 7
+          unit_of_measurement: min
+      - valve_switch: $valve_switch_2_name Run
         valve_switch_id: relay2
-        enable_switch: Backyard - $valve_switch_2_name Cycle Enabled
-        run_duration: $valve_switch_2_duration
-      - valve_switch: Backyard - $valve_switch_3_name Run
+        enable_switch: $valve_switch_2_name Cycle Enabled
+        run_duration_number:
+          name: $valve_switch_2_name Duration
+          initial_value: 10
+          unit_of_measurement: min
+      - valve_switch: $valve_switch_3_name Run
         valve_switch_id: relay3
-        enable_switch: Backyard - $valve_switch_3_name Cycle Enabled
-        run_duration: $valve_switch_3_duration
-      - valve_switch: Backyard - $valve_switch_4_name Run
+        enable_switch: $valve_switch_3_name Cycle Enabled
+        run_duration_number:
+          name: $valve_switch_3_name Duration
+          initial_value: 10
+          unit_of_measurement: min
+      - valve_switch: $valve_switch_4_name Run
         valve_switch_id: relay4
-        enable_switch: Backyard - $valve_switch_4_name Cycle Enabled
-        run_duration: $valve_switch_4_duration
+        enable_switch: $valve_switch_4_name Cycle Enabled
+        run_duration_number:
+          name: $valve_switch_4_name Duration
+          initial_value: 2
+          unit_of_measurement: min
 
 sensor:
   # Reports how long the device has been powered (in hours) since last reboot
@@ -75,9 +80,18 @@ sensor:
     update_interval: 60s
 
 time:
+  - platform: homeassistant
+    id: homeassistant_time
+    timezone: America/Santiago
+
   - platform: sntp
-    # id: backyard_start_time
-    # ...
+    id: sntp_time
+    timezone: America/Santiago
+    on_time_sync:
+      then:
+        - logger.log:
+            level: INFO
+            format:  "Time synchronized"
     on_time:
       # Every morning on weekdays
       - seconds: 0
