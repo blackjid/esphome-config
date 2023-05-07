@@ -3,8 +3,8 @@ substitutions:
   formated_name: Shelly Stairs
   ip_address: 10.0.2.203
   # Name for the relays
-  channel_1: Stairs
-  channel_2: Family Room
+  channel_1: Family Room
+  channel_2: Stairs
   max_power: "2000.0" # watt
   max_temp: "83.0" # °C
   
@@ -40,11 +40,11 @@ sensor:
       name: ${channel_1} power
       id: power_channel_1
       filters:
-        - multiply: 1
+        - multiply: -1
       on_value_range:
         - above: ${max_power}
           then:
-            - switch.turn_off: shelly_relay_1
+            - light.turn_off: shelly_relay_1
             - homeassistant.service:
                 service: persistent_notification.create
                 data:
@@ -55,11 +55,11 @@ sensor:
       name: ${channel_2} power
       id: power_channel_2
       filters:
-        - multiply: -1
+        - multiply: 1
       on_value_range:
         - above: ${max_power}
           then:
-            - light.turn_off: shelly_relay_2
+            - switch.turn_off: shelly_relay_2
             - homeassistant.service:
                 service: persistent_notification.create
                 data:
@@ -98,8 +98,8 @@ sensor:
     on_value_range:
       - above: ${max_temp}
         then:
-          - switch.turn_off: shelly_relay_1
-          - light.turn_off: shelly_relay_2
+          - light.turn_off: shelly_relay_1
+          - switch.turn_off: shelly_relay_2
           - homeassistant.service:
               service: persistent_notification.create
               data:
@@ -125,26 +125,21 @@ output:
     pin: GPIO4
     id: shelly_family_room_relay
 
-switch:
-  - platform: gpio
+light:
+  - platform: binary
+    name: ${channel_1} Light
+    output: shelly_family_room_relay
     id: shelly_relay_1
-    name: ${channel_1} relay
+
+switch:
+  # Lifx Stairs bulb, it should always be on to be controlled via binary sensor
+  - platform: gpio
+    id: shelly_relay_2
+    name: ${channel_2} relay
     internal: true
     pin: GPIO15
     icon: "mdi:electric-switch"
     restore_mode: ALWAYS_ON
-  # - platform: gpio
-  #   id: shelly_relay_2
-  #   name: ${channel_2} relay
-  #   pin: GPIO4
-  #   icon: "mdi:electric-switch"
-  #   restore_mode: RESTORE_DEFAULT_OFF
-
-light:
-  - platform: binary
-    name: "Family Room Light"
-    output: shelly_family_room_relay
-    id: shelly_relay_2
 
 binary_sensor:
   - platform: gpio
@@ -156,6 +151,15 @@ binary_sensor:
     pin:
       number: GPIO13
     name: ${channel_1} Switch
+    internal: true
+    on_state:
+      then:
+        - light.toggle: shelly_relay_1
+
+  - platform: gpio
+    pin:
+      number: GPIO5
+    name: ${channel_2} Switch
     internal: true
     on_double_click:
       min_length: 50ms
@@ -175,9 +179,9 @@ binary_sensor:
     on_state:
       if:
         condition:
-          - switch.is_off: shelly_relay_1
+          - switch.is_off: shelly_relay_2
         then:
-          - switch.turn_on: shelly_relay_1
+          - switch.turn_on: shelly_relay_2
         else:
           - homeassistant.service:
                 service: scene.turn_on
@@ -188,12 +192,3 @@ binary_sensor:
               service: homeassistant.toggle
               data: 
                 entity_id: light.stairs
-
-  - platform: gpio
-    pin:
-      number: GPIO5
-    name: ${channel_2} Switch
-    internal: true
-    on_state:
-      then:
-        - light.toggle: shelly_relay_2
