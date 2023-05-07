@@ -7,7 +7,7 @@ substitutions:
   channel_2: Stairs
   max_power: "2000.0" # watt
   max_temp: "83.0" # °C
-  
+
 <<: !include common/esphome/esp01_1m.yaml
 
 <<: !include common/common.yaml
@@ -190,5 +190,5 @@ binary_sensor:
                   transition: "5"
           - homeassistant.service:
               service: homeassistant.toggle
-              data: 
+              data:
                 entity_id: light.stairs

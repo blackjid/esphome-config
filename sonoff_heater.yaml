@@ -32,7 +32,7 @@ status_led:
   pin:
     number: GPIO13
     inverted: yes
-    
+
 # text_sensor:
 #   - platform: homeassistant
 #     id: heater_status
@@ -44,22 +44,22 @@ sensor:
     name: "Living Room Temperature"
     id: living_room_temp
     entity_id: sensor.multisensor_6_air_temperature
-    
+
   - platform: homeassistant
     id: family_room_temp
     name: "Family Room Temperature"
     entity_id: sensor.sensor_air_temperature_2
-    
+
   - platform: homeassistant
     id: master_bedroom_temp
     name: "Master Bedroom Temperature"
     entity_id: sensor.4_in_1_sensor_air_temperature
-    
+
   - platform: homeassistant
     id: kitchen_temp
     name: "Kitchen Temperature"
     entity_id: sensor.kitchen_temperature
-    
+
   - platform: kalman_combinator
     id: read_temperature
     name: "Read Temperature"
