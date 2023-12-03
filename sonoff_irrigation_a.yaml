@@ -11,7 +11,8 @@ substitutions:
   rx_gpio: GPIO3
   tx_gpio: GPIO1
 
-  devicename: sprinkler_controller
+  devicename: sonoff-irrigation-a
+  controllername: sprinkler_controller
   formated_name: Sprinkler A
   ip_address: 10.0.2.103
   comment: |-
@@ -35,12 +36,21 @@ substitutions:
 <<: !include packages/irrigation/base.yaml
 
 sprinkler:
-  - id: $devicename
+  - id: $controllername
     main_switch: ${formated_name} - Run Now All
     auto_advance_switch:
       name: ${formated_name} - Auto Enabled
       restore_mode: RESTORE_DEFAULT_ON
-    standby_switch: ${formated_name} - Standby
+    standby_switch:
+      name: ${formated_name} - Standby
+      on_turn_on:
+        - text_sensor.template.publish:
+            id: valve_status
+            state: "Standby"
+      on_turn_off:
+        - text_sensor.template.publish:
+            id: valve_status
+            state: "Idle"
     multiplier_number:
       name: "${formated_name} - Multiplier"
       initial_value: 1
@@ -111,7 +121,7 @@ time:
         minutes: 30
         hours: 21
         then:
-          - sprinkler.start_full_cycle: $devicename
+          - sprinkler.start_full_cycle: $controllername
 
 # number:
 #   - id: backyard_start_time

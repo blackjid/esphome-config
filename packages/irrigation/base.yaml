@@ -74,7 +74,7 @@ text_sensor:
     update_interval: $sensor_update_frequency
     icon: "mdi:timer-sand"
     lambda: |-
-      int seconds = round(id($devicename).time_remaining_active_valve().value_or(0));
+      int seconds = round(id($controllername).time_remaining_active_valve().value_or(0));
       int days = seconds / (24 * 3600);
       seconds = seconds % (24 * 3600);
       int hours = seconds / 3600;
@@ -94,7 +94,7 @@ text_sensor:
     update_interval: $sensor_update_frequency
     icon: "mdi:progress-clock"
     lambda: |-
-      int progress_percent = round(((id($devicename).valve_run_duration_adjusted(id($devicename).active_valve().value_or(0)) - id($devicename).time_remaining_active_valve().value_or(0)) * 100 / id($devicename).valve_run_duration_adjusted(id($devicename).active_valve().value_or(0))));
+      int progress_percent = round(((id($controllername).valve_run_duration_adjusted(id($controllername).active_valve().value_or(0)) - id($controllername).time_remaining_active_valve().value_or(0)) * 100 / id($controllername).valve_run_duration_adjusted(id($controllername).active_valve().value_or(0))));
       std::string progress_percent_as_string = std::to_string(progress_percent);
       return progress_percent_as_string +"%";
 
