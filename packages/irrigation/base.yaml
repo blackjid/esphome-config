@@ -3,28 +3,69 @@ switch:
     id: relay1
     name: "irrigation_relay1"
     pin: $rel1_gpio
-    internal: true
-    restore_mode: RESTORE_DEFAULT_OFF
+    internal: true # Prevents GPIO switch NAME from showing up in Home Assistant
+    restore_mode: RESTORE_DEFAULT_OFF  # Prevents GPIO pin from going high during boot
+    on_turn_on:
+      - text_sensor.template.publish:
+          id: valve_status
+          state: "$valve_switch_1_name Active"
+    on_turn_off:
+      - text_sensor.template.publish:
+          id: valve_status
+          state: "Idle"
   - platform: gpio
     id: relay2
     name: "irrigation_relay2"
     pin: $rel2_gpio
-    internal: true
-    restore_mode: RESTORE_DEFAULT_OFF
+    internal: true # Prevents GPIO switch NAME from showing up in Home Assistant
+    restore_mode: RESTORE_DEFAULT_OFF  # Prevents GPIO pin from going high during boot
+    on_turn_on:
+      - text_sensor.template.publish:
+          id: valve_status
+          state: "$valve_switch_2_name Active"
+    on_turn_off:
+      - text_sensor.template.publish:
+          id: valve_status
+          state: "Idle"
   - platform: gpio
     id: relay3
     name: "irrigation_relay3"
     pin: $rel3_gpio
-    internal: true
-    restore_mode: RESTORE_DEFAULT_OFF
+    internal: true # Prevents GPIO switch NAME from showing up in Home Assistant
+    restore_mode: RESTORE_DEFAULT_OFF  # Prevents GPIO pin from going high during boot
+    on_turn_on:
+      - text_sensor.template.publish:
+          id: valve_status
+          state: "$valve_switch_3_name Active"
+    on_turn_off:
+      - text_sensor.template.publish:
+          id: valve_status
+          state: "Idle"
   - platform: gpio
     id: relay4
     name: "irrigation_relay4"
     pin: $rel4_gpio
-    internal: true
-    restore_mode: RESTORE_DEFAULT_OFF
+    internal: true # Prevents GPIO switch NAME from showing up in Home Assistant
+    restore_mode: RESTORE_DEFAULT_OFF  # Prevents GPIO pin from going high during boot
+    on_turn_on:
+      - text_sensor.template.publish:
+          id: valve_status
+          state: "$valve_switch_4_name Active"
+    on_turn_off:
+      - text_sensor.template.publish:
+          id: valve_status
+          state: "Idle"
+
   - platform: restart
     name: "Restart"
+
+text_sensor:
+  # Expose Valve Status as a sensor.
+  - platform: template
+    id: valve_status
+    name: ${formated_name} Status
+    update_interval: never
+    icon: "mdi:information-variant"
 
 logger:
   level: VERBOSE
@@ -150,4 +191,4 @@ status_led:
 # text_sensor:
 #   - platform: template
 #     id: active_valve_name
-#     name: "Active Valve"   
+#     name: "Active Valve"
