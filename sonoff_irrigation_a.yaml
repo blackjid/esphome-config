@@ -16,7 +16,7 @@ substitutions:
   ip_address: 10.0.2.103
   comment: |-
     Irrigation controller A.
-    Mounted on the green garden backyarn and controlling front yard plus the green garden.
+    Backyard
 
     Location: Green Garden Backyard
     Device: Sonoff 4ch R3
@@ -48,7 +48,7 @@ sprinkler:
     valves:
       - valve_switch: $valve_switch_1_name - Run
         valve_switch_id: relay1
-        enable_switch: 
+        enable_switch:
           name: $valve_switch_1_name - Auto
           restore_mode: RESTORE_DEFAULT_ON
         run_duration_number:
@@ -57,7 +57,7 @@ sprinkler:
           unit_of_measurement: min
       - valve_switch: $valve_switch_2_name - Run
         valve_switch_id: relay2
-        enable_switch: 
+        enable_switch:
           name: $valve_switch_2_name - Auto
           restore_mode: RESTORE_DEFAULT_ON
         run_duration_number:
@@ -66,7 +66,7 @@ sprinkler:
           unit_of_measurement: min
       - valve_switch: $valve_switch_3_name - Run
         valve_switch_id: relay3
-        enable_switch: 
+        enable_switch:
           name: $valve_switch_3_name - Auto
           restore_mode: RESTORE_DEFAULT_ON
         run_duration_number:
@@ -75,7 +75,7 @@ sprinkler:
           unit_of_measurement: min
       - valve_switch: $valve_switch_4_name - Run
         valve_switch_id: relay4
-        enable_switch: 
+        enable_switch:
           name: $valve_switch_4_name - Auto
           restore_mode: RESTORE_DEFAULT_ON
         run_duration_number:

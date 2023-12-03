@@ -16,7 +16,7 @@ substitutions:
   ip_address: 10.0.2.160
   comment: |-
     Irrigation controller B.
-    Mounted on the green garden backyarn and controlling front yard plus the green garden.
+    Frontyard
 
     Location: Green Garden Backyard
     Device: Sonoff 4ch R3
