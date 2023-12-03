@@ -11,7 +11,7 @@ substitutions:
   rx_gpio: GPIO3
   tx_gpio: GPIO1
 
-  devicename: sonoff-irrigation-b
+  devicename: sprinkler_controller
   formated_name: Sprinkler B
   ip_address: 10.0.2.160
   comment: |-
@@ -26,6 +26,8 @@ substitutions:
   valve_switch_3_name: ${formated_name}7 - Jardin Entrada - Goteo
   valve_switch_4_name: ${formated_name}8 - Pasto Antejardin
 
+  sensor_update_frequency: 1s
+
 <<: !include common/esphome/esp01_1m_irrigation.yaml
 
 <<: !include common/common.yaml
@@ -33,7 +35,7 @@ substitutions:
 <<: !include packages/irrigation/base.yaml
 
 sprinkler:
-  - id: sprinkler_controller
+  - id: $devicename
     main_switch: ${formated_name} - Run Now All
     auto_advance_switch:
       name: ${formated_name} - Auto Enabled
@@ -109,7 +111,7 @@ time:
         minutes: 00
         hours: 21
         then:
-          - sprinkler.start_full_cycle: sprinkler_controller
+          - sprinkler.start_full_cycle: $devicename
       # Every morning on weekdays
       # - seconds: 0
       #   minutes: 00

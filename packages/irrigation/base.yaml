@@ -67,6 +67,37 @@ text_sensor:
     update_interval: never
     icon: "mdi:information-variant"
 
+  # Expose Time Remaining as a sensor.
+  - platform: template
+    id: time_remaining
+    name: ${formated_name} Time Remaining
+    update_interval: $sensor_update_frequency
+    icon: "mdi:timer-sand"
+    lambda: |-
+      int seconds = round(id($devicename).time_remaining_active_valve().value_or(0));
+      int days = seconds / (24 * 3600);
+      seconds = seconds % (24 * 3600);
+      int hours = seconds / 3600;
+      seconds = seconds % 3600;
+      int minutes = seconds /  60;
+      seconds = seconds % 60;
+        return {
+          ((days ? String(days) + "d " : "") +
+          (hours ? String(hours) + "h " : "") +
+          (minutes ? String(minutes) + "m " : "") +
+          (String(seconds) + "s")).c_str()};
+
+  # Expose Progress Percent as a sensor.
+  - platform: template
+    id: progress_percent
+    name: ${formated_name} Progress %
+    update_interval: $sensor_update_frequency
+    icon: "mdi:progress-clock"
+    lambda: |-
+      int progress_percent = round(((id($devicename).valve_run_duration_adjusted(id($devicename).active_valve().value_or(0)) - id($devicename).time_remaining_active_valve().value_or(0)) * 100 / id($devicename).valve_run_duration_adjusted(id($devicename).active_valve().value_or(0))));
+      std::string progress_percent_as_string = std::to_string(progress_percent);
+      return progress_percent_as_string +"%";
+
 logger:
   level: VERBOSE
 
