@@ -5,56 +5,27 @@ switch:
     pin: $rel1_gpio
     internal: true # Prevents GPIO switch NAME from showing up in Home Assistant
     restore_mode: RESTORE_DEFAULT_OFF  # Prevents GPIO pin from going high during boot
-    on_turn_on:
-      - text_sensor.template.publish:
-          id: valve_status
-          state: "$valve_switch_1_name Active"
-    on_turn_off:
-      - text_sensor.template.publish:
-          id: valve_status
-          state: "Idle"
+
   - platform: gpio
     id: relay2
     name: "irrigation_relay2"
     pin: $rel2_gpio
     internal: true # Prevents GPIO switch NAME from showing up in Home Assistant
     restore_mode: RESTORE_DEFAULT_OFF  # Prevents GPIO pin from going high during boot
-    on_turn_on:
-      - text_sensor.template.publish:
-          id: valve_status
-          state: "$valve_switch_2_name Active"
-    on_turn_off:
-      - text_sensor.template.publish:
-          id: valve_status
-          state: "Idle"
+
   - platform: gpio
     id: relay3
     name: "irrigation_relay3"
     pin: $rel3_gpio
     internal: true # Prevents GPIO switch NAME from showing up in Home Assistant
     restore_mode: RESTORE_DEFAULT_OFF  # Prevents GPIO pin from going high during boot
-    on_turn_on:
-      - text_sensor.template.publish:
-          id: valve_status
-          state: "$valve_switch_3_name Active"
-    on_turn_off:
-      - text_sensor.template.publish:
-          id: valve_status
-          state: "Idle"
+
   - platform: gpio
     id: relay4
     name: "irrigation_relay4"
     pin: $rel4_gpio
     internal: true # Prevents GPIO switch NAME from showing up in Home Assistant
     restore_mode: RESTORE_DEFAULT_OFF  # Prevents GPIO pin from going high during boot
-    on_turn_on:
-      - text_sensor.template.publish:
-          id: valve_status
-          state: "$valve_switch_4_name Active"
-    on_turn_off:
-      - text_sensor.template.publish:
-          id: valve_status
-          state: "Idle"
 
   - platform: restart
     name: "Restart"
@@ -64,8 +35,14 @@ text_sensor:
   - platform: template
     id: valve_status
     name: ${formated_name} Status
-    update_interval: never
+    update_interval: $sensor_update_frequency
     icon: "mdi:information-variant"
+    lambda: |-
+      int active_valve_number = id($controllername).active_valve().value_or(0);
+      if (active_valve_number > 0) {
+        return std::string(id($controllername).valve_name(active_valve_number));
+      }
+      return std::string(id($controllername).standby() ? "Standby" : "Idle");
 
   # Expose Time Remaining as a sensor.
   - platform: template

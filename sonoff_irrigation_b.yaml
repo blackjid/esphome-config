@@ -43,14 +43,6 @@ sprinkler:
       restore_mode: RESTORE_DEFAULT_ON
     standby_switch:
       name: ${formated_name} - Standby
-      on_turn_on:
-        - text_sensor.template.publish:
-            id: valve_status
-            state: "Standby"
-      on_turn_off:
-        - text_sensor.template.publish:
-            id: valve_status
-            state: "Idle"
     multiplier_number:
       name: "${formated_name} - Multiplier"
       initial_value: 1
