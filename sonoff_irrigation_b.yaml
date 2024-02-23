@@ -45,12 +45,12 @@ sprinkler:
       name: ${formated_name} - Standby
     multiplier_number:
       name: "${formated_name} - Multiplier"
-      initial_value: 1
+      initial_value: 1.8
       unit_of_measurement: times
       min_value: 0.1
       max_value: 5
     valves:
-      - valve_switch: $valve_switch_1_name - Run All
+      - valve_switch: $valve_switch_1_name - Run
         valve_switch_id: relay1
         enable_switch:
           name: $valve_switch_1_name - Auto
@@ -59,7 +59,7 @@ sprinkler:
           name: $valve_switch_1_name - Duration
           initial_value: 2
           unit_of_measurement: min
-      - valve_switch: $valve_switch_2_name - Run All
+      - valve_switch: $valve_switch_2_name - Run
         valve_switch_id: relay2
         enable_switch:
           name: $valve_switch_2_name - Auto
@@ -68,7 +68,7 @@ sprinkler:
           name: $valve_switch_2_name - Duration
           initial_value: 10
           unit_of_measurement: min
-      - valve_switch: $valve_switch_3_name - Run All
+      - valve_switch: $valve_switch_3_name - Run
         valve_switch_id: relay3
         enable_switch:
           name: $valve_switch_3_name - Auto
@@ -77,7 +77,7 @@ sprinkler:
           name: $valve_switch_3_name - Duration
           initial_value: 10
           unit_of_measurement: min
-      - valve_switch: $valve_switch_4_name - Run All
+      - valve_switch: $valve_switch_4_name - Run
         valve_switch_id: relay4
         enable_switch:
           name: $valve_switch_4_name - Auto
