@@ -22,6 +22,22 @@ light:
     output: shelly_hallway_relay
     id: lightid
 
+sensor:
+  # Reports how long the device has been powered (in hours) since last reboot
+  - platform: uptime
+    name: ${formated_name} Uptime
+    update_interval: 60s
+    filters:
+      - lambda: return x / 3600;
+    unit_of_measurement: "h"
+  - platform: wifi_signal
+    name: "${formated_name} Wifi Signal"
+    update_interval: 60s
+
+switch:
+  - platform: restart
+    name: "Restart"
+
 binary_sensor:
   - platform: gpio
     pin:
