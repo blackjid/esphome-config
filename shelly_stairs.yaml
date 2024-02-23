@@ -27,7 +27,7 @@ sensor:
   - platform: wifi_signal
     name: "${formated_name} Wifi Signal"
     update_interval: 60s
-  - platform: ade7953
+  - platform: ade7953_i2c
     voltage:
       name: ${formated_name} voltage
     current_a:
@@ -144,7 +144,7 @@ switch:
 binary_sensor:
   - platform: gpio
     pin: GPIO16
-    name: "ade7953 IRQ pin"
+    name: "ade7953_i2c IRQ pin"
     internal: true
 
   - platform: gpio

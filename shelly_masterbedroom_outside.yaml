@@ -31,7 +31,7 @@ sensor:
   - platform: wifi_signal
     name: "${formated_name} Wifi Signal"
     update_interval: 60s
-  - platform: ade7953
+  - platform: ade7953_i2c
     irq_pin: GPIO16 # Prevent overheating by setting this
     voltage:
       name: ${formated_name} voltage
