@@ -14,7 +14,6 @@ substitutions:
   devicename: sonoff-irrigation-b
   controllername: sprinkler_controller
   formated_name: Sprinkler B
-  ip_address: 10.0.2.160
   comment: |-
     Irrigation controller B.
     Frontyard
