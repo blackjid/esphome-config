@@ -1,7 +1,6 @@
 substitutions:
   devicename: sonoff-heater
   formated_name: Sonoff Heater
-  ip_address: 10.0.2.202
 
 <<: !include common/esphome/esp01_1m.yaml
 

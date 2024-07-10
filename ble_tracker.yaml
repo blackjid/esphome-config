@@ -1,7 +1,6 @@
 substitutions:
   devicename: ble-tracker
   formated_name: BLE Tracker
-  ip_address: 10.0.2.58
 
 <<: !include common/esphome/nodemcu_32s_esp_idf.yaml
 

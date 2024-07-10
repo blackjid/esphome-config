@@ -2,7 +2,6 @@ substitutions:
   devicename: shelly-quincho
   devicetype: shelly 2.5
   formated_name: Shelly Quincho
-  ip_address: 10.0.2.235
   # Name for the relays
   channel_1: Ceiling
   channel_2: Table

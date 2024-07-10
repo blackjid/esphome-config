@@ -1,7 +1,6 @@
 substitutions:
   devicename: shelly-pool-light-back
   formated_name: Shelly Pool Light Back
-  ip_address: 10.0.2.236
   # Name for the relays
   channel_1: Back
   max_power: "2000.0" # watt

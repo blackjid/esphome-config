@@ -1,7 +1,6 @@
 substitutions:
   devicename: shelly-pool-ligth-stairs
   formated_name: Shelly Pool Light Stairs
-  ip_address: 10.0.2.237
   # Name for the relays
   channel_1: Stairs
   max_power: "2000.0" # watt

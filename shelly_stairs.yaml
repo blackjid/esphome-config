@@ -1,7 +1,6 @@
 substitutions:
   devicename: shelly-stairs
   formated_name: Shelly Stairs
-  ip_address: 10.0.2.203
   # Name for the relays
   channel_1: Family Room
   channel_2: Stairs

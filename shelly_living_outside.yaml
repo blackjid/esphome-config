@@ -2,7 +2,6 @@ substitutions:
   devicename: shelly-living-outside
   devicetype: shelly 2.5
   formated_name: Shelly Living Outside
-  ip_address: 10.0.2.159
   # Name for the relays
   channel_1: Terrace Sconces 1
   channel_2: Terrace Ceiling

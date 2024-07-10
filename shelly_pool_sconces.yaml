@@ -3,7 +3,6 @@ substitutions:
   formated_name: Shelly Pool Sconces
   devicetype: shelly 1pm
   device_location: pool
-  ip_address: 10.0.2.140
   # Name for the relays
   channel_1: Pool Sconces
   max_power: "2000.0" # watt

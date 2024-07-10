@@ -2,7 +2,6 @@ substitutions:
   devicename: shelly-masterbedroom-outside
   devicetype: shelly 2.5
   formated_name: Shelly Master Bedroom Outside
-  ip_address: 10.0.2.49
   # Name for the relays
   channel_1: Garage / Green Garden Sconces
   channel_2: Terrace Sconces 2
