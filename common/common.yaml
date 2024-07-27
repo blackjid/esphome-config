@@ -6,4 +6,4 @@
 <<: !include web_server.yaml
 <<: !include time.yaml
 
-# captive_portal:
+captive_portal:
