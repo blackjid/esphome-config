@@ -32,11 +32,11 @@ status_led:
     number: GPIO13
     inverted: yes
 
-# text_sensor:
-#   - platform: homeassistant
-#     id: heater_status
-#     entity_id: climate.heater
-#     attribute: hvac_action
+text_sensor:
+  - platform: homeassistant
+    id: heater_status
+    entity_id: climate.heater
+    attribute: hvac_action
 
 sensor:
   - platform: homeassistant
