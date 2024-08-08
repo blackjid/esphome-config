@@ -9,6 +9,7 @@
 **/platformio.ini
 /secrets.yaml
 /.vscode/
+/.platformio
 
 # Ignore project folders
 ble_tracker/
