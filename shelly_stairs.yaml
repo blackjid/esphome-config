@@ -6,7 +6,7 @@ substitutions:
   channel_1: Stairs
   channel_2: Family Room
 
-  comment: |
+  comment: |-
     Smart Bulb connected to output relay_output_1
     Dumb Bulb connected to output relay_output_2
 
@@ -42,32 +42,18 @@ light:
     id: family_room_light
 
 binary_sensor:
-  # Button on device
-  - platform: gpio
-    name: ${devicename} Button
-    pin:
-      number: GPIO4
-      inverted: yes
-      mode:
-        input: true
-        pullup: true
-    internal: true
   # Input 1 Dumb Bulb
   - platform: gpio
-    name: ${input_name_1}
+    id: input_1
     pin: GPIO5
-    filters:
-      - delayed_on_off: 50ms
     on_state:
       then:
         - light.toggle: family_room_light
     internal: true
   # Input 2 Smart Bulb
   - platform: gpio
-    name: ${input_name_2}
+    id: input_2
     pin: GPIO18
-    filters:
-      - delayed_on_off: 50ms
     on_state:
       if:
         condition:
@@ -86,7 +72,7 @@ sensor:
   - platform: ade7953_i2c
     irq_pin: GPIO27
     voltage:
-      name: ${devicename} Voltage
+      name: ${formated_name} Voltage
       entity_category: diagnostic
     current_a:
       name: ${channel_2} Current
@@ -114,6 +100,8 @@ sensor:
       name: ${channel_1} Power
       id: power_channel_1
       entity_category: diagnostic
+      filters:
+        - multiply: -1
       on_value_range:
         - above: ${max_power}
           then:
@@ -129,7 +117,7 @@ sensor:
   # Internal NTC Temperature sensor
   - platform: ntc
     sensor: temp_resistance_reading
-    name: ${devicename} Temperature
+    name: ${formated_name} Temperature
     unit_of_measurement: °C
     accuracy_decimals: 1
     icon: mdi:thermometer
@@ -150,5 +138,5 @@ sensor:
   - platform: adc
     id: temp_analog_reading
     pin: GPIO35
-    attenuation: 11db
+    attenuation: 12db
     update_interval: 10s
