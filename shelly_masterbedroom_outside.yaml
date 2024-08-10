@@ -3,8 +3,8 @@ substitutions:
   formated_name: Shelly Master Bedroom Outside
   max_power: "2000.0" # watt
   # Name for the relays
-  channel_1: Garage / Green Garden Sconces
-  channel_2: Terrace Sconces 2
+  channel_1: Terrace Sconces 2
+  channel_2: Garage / Green Garden Sconces
 
   comment: |-
     Placed in the master bedroom near the window and control outside lights
@@ -29,11 +29,11 @@ light:
   - platform: binary
     name: ${channel_1}
     output: relay_output_1
-    id: garage_sconces_light
+    id: terrace_sconces_light
   - platform: binary
     name: ${channel_2}
     output: relay_output_2
-    id: terrace_light
+    id: garage_sconces_light
 
 binary_sensor:
   # Input 1
@@ -42,7 +42,7 @@ binary_sensor:
     pin: GPIO5
     on_state:
       then:
-        - light.toggle: garage_sconces_light
+        - light.toggle: terrace_sconces_light
     internal: true
   # Input 2
   - platform: gpio
@@ -50,7 +50,7 @@ binary_sensor:
     pin: GPIO18
     on_state:
       then:
-        - light.toggle: terrace_light
+        - light.toggle: garage_sconces_light
     internal: true
 
 sensor:
@@ -72,7 +72,7 @@ sensor:
       on_value_range:
         - above: ${max_power}
           then:
-            - light.turn_off: terrace_light
+            - light.turn_off: garage_sconces_light
             - homeassistant.service:
                 service: persistent_notification.create
                 data:
@@ -91,7 +91,7 @@ sensor:
       on_value_range:
         - above: ${max_power}
           then:
-            - light.turn_off: garage_sconces_light
+            - light.turn_off: terrace_sconces_light
             - homeassistant.service:
                 service: persistent_notification.create
                 data:
