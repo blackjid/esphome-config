@@ -42,7 +42,18 @@ binary_sensor:
     pin: GPIO5
     on_state:
       then:
-        - light.toggle: terrace_sconces_light
+        - if:
+            condition:
+              and:
+                - wifi.connected:
+                - api.connected:
+            then:
+              - homeassistant.service:
+                  service: light.toggle
+                  data:
+                    entity_id: light.outside_sconces
+            else:
+              - light.toggle: terrace_sconces_light
     internal: true
   # Input 2
   - platform: gpio
