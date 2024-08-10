@@ -1,5 +1,6 @@
 ---
 web_server:
+  version: 3
   auth:
     username: admin
     password: !secret web_password
