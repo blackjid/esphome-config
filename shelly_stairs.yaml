@@ -32,8 +32,11 @@ switch:
     id: relay_1_switch
     name: ${channel_1} relay
     output: relay_output_1
-    internal: true
+    entity_category: config
     restore_mode: ALWAYS_ON
+  - platform: restart
+    name: "Restart"
+    entity_category: config
 
 light:
   - platform: binary
