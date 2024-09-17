@@ -1,3 +1,14 @@
 ---
 time:
+  - platform: homeassistant
+    id: homeassistant_time
+    timezone: America/Santiago
+
   - platform: sntp
+    id: sntp_time
+    timezone: America/Santiago
+    on_time_sync:
+      then:
+        - logger.log:
+            level: INFO
+            format:  "Time synchronized"
