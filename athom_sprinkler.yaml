@@ -1,0 +1,225 @@
+substitutions:
+  led_gpio: GPIO15
+  rel1_gpio: GPIO27
+  rel2_gpio: GPIO14
+  rel3_gpio: GPIO12
+  rel4_gpio: GPIO13
+  rel5_gpio: GPIO2
+  rel6_gpio: GPIO4
+  rel7_gpio: GPIO5
+  rel8_gpio: GPIO18
+
+  devicename: athom-sprinkler
+  controllername: sprinkler_controller
+  formated_name: Sprinkler
+  comment: |-
+    Sprinkler Controller
+    Backyard
+
+    Location: Green Garden Backyard
+    Device: Sonoff 4ch R3
+
+  valve_switch_1_name: (ch1) Terraza
+  valve_switch_2_name: (ch2) Jardinera Fondo
+  valve_switch_3_name: (ch3) Pasto Shine
+  valve_switch_4_name: (ch4) Pasto Shade
+  valve_switch_5_name: (ch5) Greengarden
+  valve_switch_6_name: (ch6) Jardineras Estacionamiento
+  valve_switch_7_name: (ch7) Jardin Entrada
+  valve_switch_8_name: (ch8) Pasto Antejardin
+
+  sensor_update_frequency: 1s
+
+<<: !include common/esphome/esp32dev_sprinkler.yaml
+
+<<: !include common/common_irrigation.yaml
+
+<<: !include packages/irrigation/base.yaml
+
+sprinkler:
+  - id: $controllername
+    main_switch: ${formated_name} - Run Now All
+    auto_advance_switch:
+      name: ${formated_name} - Auto Enabled
+      restore_mode: RESTORE_DEFAULT_ON
+    standby_switch:
+      name: ${formated_name} - Standby
+    multiplier_number:
+      name: "${formated_name} - Multiplier"
+      initial_value: 1
+      unit_of_measurement: times
+      min_value: 0.1
+      max_value: 5
+    valves:
+      - valve_switch: $valve_switch_1_name - Run
+        valve_switch_id: relay1
+        enable_switch:
+          name: $valve_switch_1_name - Auto
+          restore_mode: RESTORE_DEFAULT_ON
+        run_duration_number:
+          name: $valve_switch_1_name - Duration
+          initial_value: 10
+          unit_of_measurement: min
+      - valve_switch: $valve_switch_2_name - Run
+        valve_switch_id: relay2
+        enable_switch:
+          name: $valve_switch_2_name - Auto
+          restore_mode: RESTORE_DEFAULT_ON
+        run_duration_number:
+          name: $valve_switch_2_name - Duration
+          initial_value: 12
+          unit_of_measurement: min
+      - valve_switch: $valve_switch_3_name - Run
+        valve_switch_id: relay3
+        enable_switch:
+          name: $valve_switch_3_name - Auto
+          restore_mode: RESTORE_DEFAULT_ON
+        run_duration_number:
+          name: $valve_switch_3_name - Duration
+          initial_value: 10
+          unit_of_measurement: min
+      - valve_switch: $valve_switch_4_name - Run
+        valve_switch_id: relay4
+        enable_switch:
+          name: $valve_switch_4_name - Auto
+          restore_mode: RESTORE_DEFAULT_ON
+        run_duration_number:
+          name: $valve_switch_4_name - Duration
+          initial_value: 2
+          unit_of_measurement: min
+      - valve_switch: $valve_switch_5_name - Run
+        valve_switch_id: relay5
+        enable_switch:
+          name: $valve_switch_5_name - Auto
+          restore_mode: RESTORE_DEFAULT_ON
+        run_duration_number:
+          name: $valve_switch_5_name - Duration
+          initial_value: 2
+          unit_of_measurement: min
+      - valve_switch: $valve_switch_6_name - Run
+        valve_switch_id: relay6
+        enable_switch:
+          name: $valve_switch_6_name - Auto
+          restore_mode: RESTORE_DEFAULT_ON
+        run_duration_number:
+          name: $valve_switch_6_name - Duration
+          initial_value: 2
+          unit_of_measurement: min
+      - valve_switch: $valve_switch_7_name - Run
+        valve_switch_id: relay7
+        enable_switch:
+          name: $valve_switch_7_name - Auto
+          restore_mode: RESTORE_DEFAULT_ON
+        run_duration_number:
+          name: $valve_switch_7_name - Duration
+          initial_value: 2
+          unit_of_measurement: min
+      - valve_switch: $valve_switch_8_name - Run
+        valve_switch_id: relay8
+        enable_switch:
+          name: $valve_switch_8_name - Auto
+          restore_mode: RESTORE_DEFAULT_ON
+        run_duration_number:
+          name: $valve_switch_8_name - Duration
+          initial_value: 2
+          unit_of_measurement: min
+
+sensor:
+  # Reports how long the device has been powered (in hours) since last reboot
+  - platform: uptime
+    name: ${formated_name} - Uptime
+  - platform: wifi_signal
+    name: "${formated_name} - Wifi Signal"
+  - platform: homeassistant
+    id: sprinkler_start_time
+    entity_id: input_datetime.sprinkler_start_time
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            auto start_time = id(sprinkler_start_time).state;
+            id(sprinkler_start_hour) = (int(start_time / 3600));
+            id(sprinkler_start_minute) = (int((start_time % 3600) / 60));
+            ESP_LOGI("sprinkler", "Updated sprinkler start time to %02d:%02d", id(sprinkler_start_hour), id(sprinkler_start_minute));
+
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+    timezone: America/Santiago
+
+  - platform: sntp
+    id: sntp_time
+    timezone: America/Santiago
+    on_time_sync:
+      then:
+        - logger.log:
+            level: INFO
+            format:  "Time synchronized"
+    on_time:
+      # Every morning on weekdays
+      - seconds: 0
+        minutes: 30
+        hours: 21
+        then:
+          - sprinkler.start_full_cycle: $controllername
+
+interval:
+  - interval: 1min
+    then:
+      - lambda: |-
+          auto time = id(homeassistant_time).now();
+
+          ESP_LOGD("sprinkler", "Current time is %02d:%02d", time.hour, time.minute);
+          ESP_LOGD("sprinkler", "Scheduled time is %02d:%02d", id(sprinkler_start_hour), id(sprinkler_start_minute));
+          
+          if (time.hour == id(sprinkler_start_hour) && time.minute == id(sprinkler_start_minute)) {
+            ESP_LOGI("sprinkler", "Starting full sprinkler cycle at %02d:%02d", time.hour, time.minute);
+          }
+
+globals:
+  - id: sprinkler_start_hour
+    type: int
+    restore_value: true
+    initial_value: '21'  # default value if not set
+  - id: sprinkler_start_minute
+    type: int
+    restore_value: true
+    initial_value: '30'  # default value if not set
+
+# number:
+#   - id: backyard_start_time
+#     platform: template
+#     name: "Backyard Start Time"
+#     mode: box
+#     lambda: 'return id(sntp_time);'
+
+# number:
+#   - platform: template
+#     id: backyard_ctrlr_multiplier
+#     name: "Backyard Sprinkler Controller Multiplier"
+#     min_value: 0.1
+#     max_value: 10.0
+#     step: 0.1
+#     lambda: "return id(backyard).multiplier();"
+#     set_action:
+#       - sprinkler.set_multiplier:
+#           id: backyard
+#           multiplier: !lambda 'return x;'
+
+# text_sensor:
+#   - platform: homeassistant
+#     name: "Start Timer"
+#     id: backyard_start_time_helper
+#     entity_id: input_datetime.start_irrigation
+#     on_value:
+#       then:
+#         - lambda: |-
+#             ESP_LOGD("main", "Old stored value  %i", id(my_global_int_hour));
+#             ESP_LOGD("main", "The helper time is  %s", x.c_str());
+#             id(my_global_int_hour) = id(my_global_int_hour) + 1;
+
+# globals:
+#    - id: my_global_int_hour
+#      type: int
+#      restore_value: yes
+#      initial_value: '19'
