@@ -34,7 +34,6 @@ substitutions:
 
 <<: !include common/common_irrigation.yaml
 
-<<: !include packages/irrigation/base.yaml
 
 sprinkler:
   - id: $controllername
@@ -44,6 +43,7 @@ sprinkler:
       restore_mode: RESTORE_DEFAULT_ON
     standby_switch:
       name: ${formated_name} - Standby
+      restore_mode: RESTORE_DEFAULT_OFF
     multiplier_number:
       name: "${formated_name} - Multiplier"
       initial_value: 1
@@ -51,6 +51,7 @@ sprinkler:
       min_value: 0.1
       max_value: 5
     valves:
+      # (ch1) Terraza
       - valve_switch: $valve_switch_1_name - Run
         valve_switch_id: relay1
         enable_switch:
@@ -58,8 +59,9 @@ sprinkler:
           restore_mode: RESTORE_DEFAULT_ON
         run_duration_number:
           name: $valve_switch_1_name - Duration
-          initial_value: 10
+          initial_value: 20
           unit_of_measurement: min
+      # (ch2) Jardinera Fondo
       - valve_switch: $valve_switch_2_name - Run
         valve_switch_id: relay2
         enable_switch:
@@ -67,8 +69,9 @@ sprinkler:
           restore_mode: RESTORE_DEFAULT_ON
         run_duration_number:
           name: $valve_switch_2_name - Duration
-          initial_value: 12
+          initial_value: 20
           unit_of_measurement: min
+      # (ch3) Pasto Shine
       - valve_switch: $valve_switch_3_name - Run
         valve_switch_id: relay3
         enable_switch:
@@ -78,6 +81,7 @@ sprinkler:
           name: $valve_switch_3_name - Duration
           initial_value: 10
           unit_of_measurement: min
+      # (ch4) Pasto Shade
       - valve_switch: $valve_switch_4_name - Run
         valve_switch_id: relay4
         enable_switch:
@@ -85,8 +89,9 @@ sprinkler:
           restore_mode: RESTORE_DEFAULT_ON
         run_duration_number:
           name: $valve_switch_4_name - Duration
-          initial_value: 2
+          initial_value: 3
           unit_of_measurement: min
+      # (ch5) Greengarden
       - valve_switch: $valve_switch_5_name - Run
         valve_switch_id: relay5
         enable_switch:
@@ -96,6 +101,7 @@ sprinkler:
           name: $valve_switch_5_name - Duration
           initial_value: 2
           unit_of_measurement: min
+      # (ch6) Jardineras Estacionamiento
       - valve_switch: $valve_switch_6_name - Run
         valve_switch_id: relay6
         enable_switch:
@@ -103,8 +109,9 @@ sprinkler:
           restore_mode: RESTORE_DEFAULT_ON
         run_duration_number:
           name: $valve_switch_6_name - Duration
-          initial_value: 2
+          initial_value: 5
           unit_of_measurement: min
+      # (ch7) Jardin Entrada
       - valve_switch: $valve_switch_7_name - Run
         valve_switch_id: relay7
         enable_switch:
@@ -112,8 +119,9 @@ sprinkler:
           restore_mode: RESTORE_DEFAULT_ON
         run_duration_number:
           name: $valve_switch_7_name - Duration
-          initial_value: 2
+          initial_value: 20
           unit_of_measurement: min
+      # (ch8) Pasto Antejardin
       - valve_switch: $valve_switch_8_name - Run
         valve_switch_id: relay8
         enable_switch:
@@ -121,7 +129,7 @@ sprinkler:
           restore_mode: RESTORE_DEFAULT_ON
         run_duration_number:
           name: $valve_switch_8_name - Duration
-          initial_value: 2
+          initial_value: 15
           unit_of_measurement: min
 
 sensor:
@@ -130,26 +138,38 @@ sensor:
     name: ${formated_name} - Uptime
   - platform: wifi_signal
     name: "${formated_name} - Wifi Signal"
-  - platform: homeassistant
-    id: sprinkler_start_time
-    entity_id: input_datetime.sprinkler_start_time
-    internal: true
-    on_value:
-      then:
-        - lambda: |-
-            auto start_time = id(sprinkler_start_time).state;
-            id(sprinkler_start_hour) = (int(start_time / 3600));
-            id(sprinkler_start_minute) = (int((start_time % 3600) / 60));
-            ESP_LOGI("sprinkler", "Updated sprinkler start time to %02d:%02d", id(sprinkler_start_hour), id(sprinkler_start_minute));
+
+  - platform: template
+    id: progress
+    name: ${formated_name} Progress
+    update_interval: $sensor_update_frequency
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    icon: "mdi:progress-clock"
+    filters:
+      - delta: 1.0
+    lambda: |-
+      auto active_valve = id($controllername).active_valve().value_or(0);
+      auto run_duration = id($controllername).valve_run_duration_adjusted(active_valve);
+      auto remaining_active_valve = id($controllername).time_remaining_active_valve().value_or(0);
+      if (run_duration == 0) {
+        return 0;  // Prevent division by zero
+      }
+      return (run_duration - remaining_active_valve) * 100 / run_duration;
 
 time:
   - platform: homeassistant
     id: homeassistant_time
-    timezone: America/Santiago
+    timezone: <+03>3
+    on_time_sync:
+      then:
+        - logger.log:
+            level: INFO
+            format:  "Time synchronized 2"
 
   - platform: sntp
     id: sntp_time
-    timezone: America/Santiago
+    timezone: <+03>3
     on_time_sync:
       then:
         - logger.log:
@@ -159,67 +179,192 @@ time:
       # Every morning on weekdays
       - seconds: 0
         minutes: 30
-        hours: 21
+        hours: 22
         then:
           - sprinkler.start_full_cycle: $controllername
+      - seconds: 0
+        minutes: 36
+        hours: 10
+        then:
+          - lambda: |-
+              ESP_LOGI("interval_logger", "Start trigger, flag set");
+              id(flag_start_process) = true;
+
+number:
+  - platform: homeassistant
+    id: sprinkler_start_offset
+    name: Start offset
+    entity_id: input_number.sprinkler_start_offset
+    on_value:
+      then:
+        - lambda: |-
+            id(start_offset_minutes) = (int) x;
+            ESP_LOGI("main", "Variable set from Home Assistant: %d", id(start_offset_minutes));
 
 interval:
   - interval: 1min
     then:
       - lambda: |-
-          auto time = id(homeassistant_time).now();
-
-          ESP_LOGD("sprinkler", "Current time is %02d:%02d", time.hour, time.minute);
-          ESP_LOGD("sprinkler", "Scheduled time is %02d:%02d", id(sprinkler_start_hour), id(sprinkler_start_minute));
-          
-          if (time.hour == id(sprinkler_start_hour) && time.minute == id(sprinkler_start_minute)) {
-            ESP_LOGI("sprinkler", "Starting full sprinkler cycle at %02d:%02d", time.hour, time.minute);
+          ESP_LOGI("interval_logger", "Checking Flag");
+          if (id(flag_start_process)) {
+            if (id(start_offset_minutes)-- > 0) {
+              ESP_LOGI("interval_logger", "Countdown in progress: %d minutes remaining", id(start_offset_minutes));
+            } else {
+              // Countdown reached 0, start the process
+              id(flag_start_process) = false; // Reset flag
+              ESP_LOGI("interval_logger", "Countdown complete. Starting the controller function.");
+              // id(controller_component).start();
+            }
           }
 
 globals:
-  - id: sprinkler_start_hour
+  - id: start_offset_minutes
     type: int
-    restore_value: true
-    initial_value: '21'  # default value if not set
-  - id: sprinkler_start_minute
-    type: int
-    restore_value: true
-    initial_value: '30'  # default value if not set
+    restore_value: no
+    initial_value: '0'  # Default offset in minutes, can be modified
+  - id: flag_start_process
+    type: bool
+    restore_value: yes
+    initial_value: 'false'
 
-# number:
-#   - id: backyard_start_time
-#     platform: template
-#     name: "Backyard Start Time"
-#     mode: box
-#     lambda: 'return id(sntp_time);'
+switch:
+  - platform: gpio
+    id: relay1
+    name: "irrigation_relay1"
+    pin: $rel1_gpio
+    internal: true # Prevents GPIO switch NAME from showing up in Home Assistant
+    restore_mode: RESTORE_DEFAULT_OFF  # Prevents GPIO pin from going high during boot
 
-# number:
-#   - platform: template
-#     id: backyard_ctrlr_multiplier
-#     name: "Backyard Sprinkler Controller Multiplier"
-#     min_value: 0.1
-#     max_value: 10.0
-#     step: 0.1
-#     lambda: "return id(backyard).multiplier();"
-#     set_action:
-#       - sprinkler.set_multiplier:
-#           id: backyard
-#           multiplier: !lambda 'return x;'
+  - platform: gpio
+    id: relay2
+    name: "irrigation_relay2"
+    pin: $rel2_gpio
+    internal: true # Prevents GPIO switch NAME from showing up in Home Assistant
+    restore_mode: RESTORE_DEFAULT_OFF  # Prevents GPIO pin from going high during boot
 
-# text_sensor:
-#   - platform: homeassistant
-#     name: "Start Timer"
-#     id: backyard_start_time_helper
-#     entity_id: input_datetime.start_irrigation
-#     on_value:
-#       then:
-#         - lambda: |-
-#             ESP_LOGD("main", "Old stored value  %i", id(my_global_int_hour));
-#             ESP_LOGD("main", "The helper time is  %s", x.c_str());
-#             id(my_global_int_hour) = id(my_global_int_hour) + 1;
+  - platform: gpio
+    id: relay3
+    name: "irrigation_relay3"
+    pin: $rel3_gpio
+    internal: true # Prevents GPIO switch NAME from showing up in Home Assistant
+    restore_mode: RESTORE_DEFAULT_OFF  # Prevents GPIO pin from going high during boot
 
-# globals:
-#    - id: my_global_int_hour
-#      type: int
-#      restore_value: yes
-#      initial_value: '19'
+  - platform: gpio
+    id: relay4
+    name: "irrigation_relay4"
+    pin: $rel4_gpio
+    internal: true # Prevents GPIO switch NAME from showing up in Home Assistant
+    restore_mode: RESTORE_DEFAULT_OFF  # Prevents GPIO pin from going high during boot
+
+  - platform: gpio
+    id: relay5
+    name: "irrigation_relay5"
+    pin: $rel5_gpio
+    internal: true # Prevents GPIO switch NAME from showing up in Home Assistant
+    restore_mode: RESTORE_DEFAULT_OFF  # Prevents GPIO pin from going high during boot
+
+  - platform: gpio
+    id: relay6
+    name: "irrigation_relay6"
+    pin: $rel6_gpio
+    internal: true # Prevents GPIO switch NAME from showing up in Home Assistant
+    restore_mode: RESTORE_DEFAULT_OFF  # Prevents GPIO pin from going high during boot
+
+  - platform: gpio
+    id: relay7
+    name: "irrigation_relay7"
+    pin: $rel7_gpio
+    internal: true # Prevents GPIO switch NAME from showing up in Home Assistant
+    restore_mode: RESTORE_DEFAULT_OFF  # Prevents GPIO pin from going high during boot
+
+  - platform: gpio
+    id: relay8
+    name: "irrigation_relay8"
+    pin: $rel8_gpio
+    internal: true # Prevents GPIO switch NAME from showing up in Home Assistant
+    restore_mode: RESTORE_DEFAULT_OFF  # Prevents GPIO pin from going high during boot
+
+  - platform: restart
+    name: "Restart"
+
+text_sensor:
+  # Expose Valve Status as a sensor.
+  - platform: template
+    id: valve_status
+    name: ${formated_name} Status
+    update_interval: $sensor_update_frequency
+    icon: "mdi:information-variant"
+    filters:
+    - lambda: |-
+        static std::string last;
+        if (x == last)
+          return {};
+        last = x;
+        return x;
+    lambda: |-
+      int active_valve_number = id($controllername).active_valve().value_or(0);
+      if (active_valve_number > 0) {
+        return std::string(id($controllername).valve_name(active_valve_number));
+      }
+      return std::string(id($controllername).standby() ? "Standby" : "Idle");
+
+  # Expose Time Remaining for running zone as a sensor.
+  - platform: template
+    id: current_time_remaining
+    name: Current Valve Time Remaining
+    update_interval: $sensor_update_frequency
+    icon: "mdi:timer-sand"
+    filters:
+    - lambda: |-
+        static std::string last;
+        if (x == last)
+          return {};
+        last = x;
+        return x;
+    lambda: |-
+      int seconds = round(id($controllername).time_remaining_active_valve().value_or(0));
+      int days = seconds / (24 * 3600);
+      seconds = seconds % (24 * 3600);
+      int hours = seconds / 3600;
+      seconds = seconds % 3600;
+      int minutes = seconds /  60;
+      seconds = seconds % 60;
+        return {
+          ((days ? std::to_string(days) + "d " : "") +
+          (hours ? std::to_string(hours) + "h " : "") +
+          (minutes ? std::to_string(minutes) + "m " : "") +
+          (std::to_string(seconds) + "s")).c_str()};
+
+  - platform: template
+    id: total_time_remaining
+    name: Program Total Time Remaining
+    update_interval: $sensor_update_frequency
+    icon: "mdi:timer-sand"
+    filters:
+    - lambda: |-
+        static std::string last;
+        if (x == last)
+          return {};
+        last = x;
+        return x;
+    lambda: |-
+      int seconds = round(id($controllername).time_remaining_current_operation().value_or(0));
+      int days = seconds / (24 * 3600);
+      seconds = seconds % (24 * 3600);
+      int hours = seconds / 3600;
+      seconds = seconds % 3600;
+      int minutes = seconds /  60;
+      seconds = seconds % 60;
+        return {
+          ((days ? std::to_string(days) + "d " : "") +
+          (hours ? std::to_string(hours) + "h " : "") +
+          (minutes ? std::to_string(minutes) + "m " : "") +
+          (std::to_string(seconds) + "s")).c_str()};
+
+logger:
+  level: VERBOSE
+
+status_led:
+  pin:
+    number: $led_gpio
+    inverted: True
