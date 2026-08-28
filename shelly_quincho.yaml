@@ -3,7 +3,7 @@ substitutions:
   devicetype: shelly 2.5
   formated_name: Shelly Quincho
   # Name for the relays
-  channel_1: Ceiling
+  channel_1: Quincho
   channel_2: Table
   max_power: "2000.0" # watt
   max_temp: "83.0" # °C
@@ -45,9 +45,9 @@ sensor:
       on_value_range:
         - above: ${max_power}
           then:
-            - light.turn_off: lightid2
-            - homeassistant.service:
-                service: persistent_notification.create
+            - switch.turn_off: switchid2
+            - homeassistant.action:
+                action: persistent_notification.create
                 data:
                   title: Message from ${devicename}
                 data_template:
@@ -62,8 +62,8 @@ sensor:
         - above: ${max_power}
           then:
             - light.turn_off: lightid1
-            - homeassistant.service:
-                service: persistent_notification.create
+            - homeassistant.action:
+                action: persistent_notification.create
                 data:
                   title: Message from ${devicename}
                 data_template:
@@ -101,9 +101,9 @@ sensor:
       - above: ${max_temp}
         then:
           - light.turn_off: lightid1
-          - light.turn_off: lightid2
-          - homeassistant.service:
-              service: persistent_notification.create
+          - switch.turn_off: switchid2
+          - homeassistant.action:
+              action: persistent_notification.create
               data:
                 title: Message from ${devicename}
               data_template:
@@ -124,10 +124,10 @@ status_led:
 
 output:
   - platform: gpio
-    pin: GPIO4
+    pin: GPIO15
     id: shelly_25_relay_1
   - platform: gpio
-    pin: GPIO15
+    pin: GPIO4
     id: shelly_25_relay_2
 
 light:
@@ -135,23 +135,25 @@ light:
     name: "${channel_1}"
     output: shelly_25_relay_1
     id: lightid1
-  - platform: binary
+
+switch:
+  - platform: output
     name: "${channel_2}"
     output: shelly_25_relay_2
-    id: lightid2
+    id: switchid2
 
 binary_sensor:
   - platform: gpio
     pin:
-      number: GPIO13
+      number: GPIO5
     name: "${channel_1} input"
     on_state:
       then:
         - light.toggle: lightid1
   - platform: gpio
     pin:
-      number: GPIO5
+      number: GPIO13
     name: "${channel_2} input"
     on_state:
       then:
-        - light.toggle: lightid2
+        - switch.toggle: switchid2
