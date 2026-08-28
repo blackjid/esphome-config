@@ -64,8 +64,8 @@ binary_sensor:
         then:
           - switch.turn_on: relay_1_switch
         else:
-          - homeassistant.service:
-              service: homeassistant.toggle
+          - homeassistant.action:
+              action: homeassistant.toggle
               data:
                 entity_id: light.stairs
     internal: true
@@ -90,8 +90,8 @@ sensor:
         - above: ${max_power}
           then:
             - light.turn_off: family_room_light
-            - homeassistant.service:
-                service: persistent_notification.create
+            - homeassistant.action:
+                action: persistent_notification.create
                 data:
                   title: Message from ${formated_name}
                 data_template:
@@ -109,8 +109,8 @@ sensor:
         - above: ${max_power}
           then:
             - switch.turn_off: relay_1_switch
-            - homeassistant.service:
-                service: persistent_notification.create
+            - homeassistant.action:
+                action: persistent_notification.create
                 data:
                   title: Message from ${formated_name}
                 data_template:
