@@ -81,20 +81,33 @@ binary_sensor:
         input: true
         pullup: true
     internal: true
-  # Input 1, detached from the relay. Exposed so it can drive HA automations,
-  # it only makes sure the fan relay never stays off
+  # Input 1, detached from the relay. The fan hangs off its own controller, so
+  # the switch only toggles the HA fan entity and keeps the relay powered
   - platform: gpio
     id: input_1
     name: ${channel_1} input
     pin:
       number: GPIO5
       ignore_strapping_warning: true
+    # The Shelly SW inputs are line referenced, so a closed switch shows up as a
+    # 100Hz pulse train rather than a steady level. delayed_off has to be long
+    # enough to bridge the zero crossings or the input chatters and toggles twice
     filters:
       - delayed_on: 20ms
       - delayed_off: 120ms
     on_state:
       then:
         - switch.turn_on: fan_relay
+        - if:
+            condition:
+              and:
+                - wifi.connected:
+                - api.connected:
+            then:
+              - homeassistant.action:
+                  action: fan.toggle
+                  data:
+                    entity_id: fan.quincho_fan
   # Input 2 controls the lights. on_state so both edges of a toggle switch work
   - platform: gpio
     id: input_2
