@@ -19,6 +19,17 @@ substitutions:
 
 <<: !include common/common.yaml
 
+# Override the shared VERBOSE logger, it drowns out everything with i2c/adc noise
+logger:
+  level: DEBUG
+  logs:
+    i2c.idf: WARN
+    ade7953: INFO
+    sensor: INFO
+    resistance: INFO
+    adc: INFO
+    preferences: INFO
+
 i2c:
   sda: GPIO26
   scl: GPIO25
@@ -249,6 +260,9 @@ sensor:
       name: ${channel_1} Power
       id: power_channel_1
       entity_category: diagnostic
+      # active_power_b is inverted too, confirmed by negative readings on this unit
+      filters:
+        - multiply: -1
       on_value_range:
         - above: ${max_power}
           then:
