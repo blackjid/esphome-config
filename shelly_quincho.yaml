@@ -87,7 +87,8 @@ binary_sensor:
       number: GPIO5
       ignore_strapping_warning: true
     filters:
-      - delayed_on_off: 50ms
+      - delayed_on: 20ms
+      - delayed_off: 120ms
     on_state:
       then:
         - switch.turn_on: fan_relay
@@ -99,8 +100,12 @@ binary_sensor:
       number: GPIO18
       mode:
         input: true
+    # The Shelly SW inputs are line referenced, so a closed switch shows up as a
+    # 100Hz pulse train rather than a steady level. delayed_off has to be long
+    # enough to bridge the zero crossings or the input chatters and toggles twice
     filters:
-      - delayed_on_off: 50ms
+      - delayed_on: 20ms
+      - delayed_off: 120ms
     on_state:
       then:
         - logger.log:
@@ -109,108 +114,6 @@ binary_sensor:
             args: ["id(input_2).state"]
         - light.toggle: quincho_lights
 
-  # --- DIAGNOSTIC: remove once SW2 is identified ---
-  # Flip the physical S2 switch and watch the log for "PIN SCAN".
-  # Whichever GPIO reports a change is the real SW2 input on this batch.
-  - platform: gpio
-    id: scan_gpio2
-    pin:
-      number: GPIO2
-      ignore_strapping_warning: true
-    internal: true
-    filters: [delayed_on_off: 50ms]
-    on_state:
-      then:
-        - logger.log: {level: WARN, format: "PIN SCAN GPIO2 -> %d", args: ["id(scan_gpio2).state"]}
-  - platform: gpio
-    id: scan_gpio16
-    pin: GPIO16
-    internal: true
-    filters: [delayed_on_off: 50ms]
-    on_state:
-      then:
-        - logger.log: {level: WARN, format: "PIN SCAN GPIO16 -> %d", args: ["id(scan_gpio16).state"]}
-  - platform: gpio
-    id: scan_gpio17
-    pin: GPIO17
-    internal: true
-    filters: [delayed_on_off: 50ms]
-    on_state:
-      then:
-        - logger.log: {level: WARN, format: "PIN SCAN GPIO17 -> %d", args: ["id(scan_gpio17).state"]}
-  - platform: gpio
-    id: scan_gpio19
-    pin: GPIO19
-    internal: true
-    filters: [delayed_on_off: 50ms]
-    on_state:
-      then:
-        - logger.log: {level: WARN, format: "PIN SCAN GPIO19 -> %d", args: ["id(scan_gpio19).state"]}
-  - platform: gpio
-    id: scan_gpio21
-    pin: GPIO21
-    internal: true
-    filters: [delayed_on_off: 50ms]
-    on_state:
-      then:
-        - logger.log: {level: WARN, format: "PIN SCAN GPIO21 -> %d", args: ["id(scan_gpio21).state"]}
-  - platform: gpio
-    id: scan_gpio22
-    pin: GPIO22
-    internal: true
-    filters: [delayed_on_off: 50ms]
-    on_state:
-      then:
-        - logger.log: {level: WARN, format: "PIN SCAN GPIO22 -> %d", args: ["id(scan_gpio22).state"]}
-  - platform: gpio
-    id: scan_gpio23
-    pin: GPIO23
-    internal: true
-    filters: [delayed_on_off: 50ms]
-    on_state:
-      then:
-        - logger.log: {level: WARN, format: "PIN SCAN GPIO23 -> %d", args: ["id(scan_gpio23).state"]}
-  - platform: gpio
-    id: scan_gpio32
-    pin: GPIO32
-    internal: true
-    filters: [delayed_on_off: 50ms]
-    on_state:
-      then:
-        - logger.log: {level: WARN, format: "PIN SCAN GPIO32 -> %d", args: ["id(scan_gpio32).state"]}
-  - platform: gpio
-    id: scan_gpio33
-    pin: GPIO33
-    internal: true
-    filters: [delayed_on_off: 50ms]
-    on_state:
-      then:
-        - logger.log: {level: WARN, format: "PIN SCAN GPIO33 -> %d", args: ["id(scan_gpio33).state"]}
-  - platform: gpio
-    id: scan_gpio34
-    pin: GPIO34
-    internal: true
-    filters: [delayed_on_off: 50ms]
-    on_state:
-      then:
-        - logger.log: {level: WARN, format: "PIN SCAN GPIO34 -> %d", args: ["id(scan_gpio34).state"]}
-  - platform: gpio
-    id: scan_gpio36
-    pin: GPIO36
-    internal: true
-    filters: [delayed_on_off: 50ms]
-    on_state:
-      then:
-        - logger.log: {level: WARN, format: "PIN SCAN GPIO36 -> %d", args: ["id(scan_gpio36).state"]}
-  - platform: gpio
-    id: scan_gpio39
-    pin: GPIO39
-    internal: true
-    filters: [delayed_on_off: 50ms]
-    on_state:
-      then:
-        - logger.log: {level: WARN, format: "PIN SCAN GPIO39 -> %d", args: ["id(scan_gpio39).state"]}
-  # --- END DIAGNOSTIC ---
 
 sensor:
   # Reports how long the device has been powered (in hours) since last reboot
