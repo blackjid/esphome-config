@@ -35,9 +35,12 @@ i2c:
   scl: GPIO25
 
 status_led:
+  # GPIO0 is the stock Shelly LED. It is a boot strapping pin, but it is only
+  # driven after boot and the board pulls it up, so the warning is noise here
   pin:
     number: GPIO0
     inverted: yes
+    ignore_strapping_warning: true
 
 output:
   - platform: gpio
@@ -150,8 +153,8 @@ sensor:
         - above: ${max_power}
           then:
             - light.turn_off: quincho_lights
-            - homeassistant.service:
-                service: persistent_notification.create
+            - homeassistant.action:
+                action: persistent_notification.create
                 data:
                   title: Message from ${formated_name}
                 data_template:
@@ -170,8 +173,8 @@ sensor:
         - above: ${max_power}
           then:
             - switch.turn_off: fan_relay
-            - homeassistant.service:
-                service: persistent_notification.create
+            - homeassistant.action:
+                action: persistent_notification.create
                 data:
                   title: Message from ${formated_name}
                 data_template:
@@ -211,8 +214,8 @@ sensor:
         then:
           - light.turn_off: quincho_lights
           - switch.turn_off: fan_relay
-          - homeassistant.service:
-              service: persistent_notification.create
+          - homeassistant.action:
+              action: persistent_notification.create
               data:
                 title: Message from ${formated_name}
               data_template:
