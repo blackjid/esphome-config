@@ -1,121 +1,24 @@
 substitutions:
   devicename: shelly-quincho
-  devicetype: shelly 2.5
+  devicetype: shelly plus 2pm # PCB v0.1.9
   formated_name: Shelly Quincho
   # Name for the relays
-  channel_1: Quincho
+  channel_1: Ceiling
   channel_2: Table
   max_power: "2000.0" # watt
   max_temp: "83.0" # °C
 
-<<: !include common/esphome/esp01_1m.yaml
+  comment: |-
+    Placed in the quincho and controls the ceiling and table lights
+
+# Dual core ESP32-U4WDH (post Sept 2022 PCB v0.1.9), so the arduino framework is fine
+<<: !include common/esphome/esp32doit.yaml
 
 <<: !include common/common.yaml
 
 i2c:
-  sda: GPIO12
-  scl: GPIO14
-
-sensor:
-  # Reports how long the device has been powered (in hours) since last reboot
-  - platform: uptime
-    name: ${formated_name} Uptime
-    update_interval: 60s
-    filters:
-      - lambda: return x / 3600;
-    unit_of_measurement: "h"
-  - platform: wifi_signal
-    name: "${formated_name} Wifi Signal"
-    update_interval: 60s
-  - platform: ade7953_i2c
-    irq_pin: GPIO16 # Prevent overheating by setting this
-    voltage:
-      name: ${formated_name} voltage
-    # On the Shelly 2.5 channels are mixed ch1=B ch2=A
-    current_a:
-      name: ${channel_2} current
-      internal: true
-    current_b:
-      name: ${channel_1} current
-      internal: true
-    active_power_a:
-      name: ${channel_2} power
-      id: power_channel_2
-      # active_power_a is normal, so don't multiply by -1
-      on_value_range:
-        - above: ${max_power}
-          then:
-            - switch.turn_off: switchid2
-            - homeassistant.action:
-                action: persistent_notification.create
-                data:
-                  title: Message from ${devicename}
-                data_template:
-                  message: Switch turned off because power exceeded ${max_power}W
-    active_power_b:
-      name: ${channel_1} power
-      id: power_channel_1
-      # active_power_b is inverted, so multiply by -1
-      filters:
-        - multiply: -1
-      on_value_range:
-        - above: ${max_power}
-          then:
-            - light.turn_off: lightid1
-            - homeassistant.action:
-                action: persistent_notification.create
-                data:
-                  title: Message from ${devicename}
-                data_template:
-                  message: Switch turned off because power exceeded ${max_power}W
-    update_interval: 30s
-
-  - platform: total_daily_energy
-    name: ${channel_1} energy
-    power_id: power_channel_1
-    filters:
-      # Multiplication factor from W to kWh is 0.001
-      - multiply: 0.001
-    unit_of_measurement: kWh
-
-  - platform: total_daily_energy
-    name: ${channel_2} energy
-    power_id: power_channel_2
-    filters:
-      # Multiplication factor from W to kWh is 0.001
-      - multiply: 0.001
-    unit_of_measurement: kWh
-
-  # NTC Temperature
-  - platform: ntc
-    sensor: temp_resistance_reading
-    name: ${formated_name} temperature
-    unit_of_measurement: "°C"
-    accuracy_decimals: 1
-    icon: "mdi:thermometer"
-    calibration:
-      b_constant: 3350
-      reference_resistance: 10kOhm
-      reference_temperature: 298.15K
-    on_value_range:
-      - above: ${max_temp}
-        then:
-          - light.turn_off: lightid1
-          - switch.turn_off: switchid2
-          - homeassistant.action:
-              action: persistent_notification.create
-              data:
-                title: Message from ${devicename}
-              data_template:
-                message: Switch turned off because temperature exceeded ${max_temp}°C
-  - platform: resistance
-    id: temp_resistance_reading
-    sensor: temp_analog_reading
-    configuration: DOWNSTREAM
-    resistor: 32kOhm
-  - platform: adc
-    id: temp_analog_reading
-    pin: A0
+  sda: GPIO26
+  scl: GPIO25
 
 status_led:
   pin:
@@ -124,36 +27,173 @@ status_led:
 
 output:
   - platform: gpio
-    pin: GPIO15
-    id: shelly_25_relay_1
+    id: relay_output_1
+    pin: GPIO13
   - platform: gpio
-    pin: GPIO4
-    id: shelly_25_relay_2
+    id: relay_output_2
+    pin:
+      number: GPIO12
+      ignore_strapping_warning: true
 
 light:
   - platform: binary
-    name: "${channel_1}"
-    output: shelly_25_relay_1
+    name: ${channel_1}
+    output: relay_output_1
     id: lightid1
+  - platform: binary
+    name: ${channel_2}
+    output: relay_output_2
+    id: lightid2
 
 switch:
-  - platform: output
-    name: "${channel_2}"
-    output: shelly_25_relay_2
-    id: switchid2
+  - platform: restart
+    name: "Restart"
+    entity_category: config
 
 binary_sensor:
+  # Device button
   - platform: gpio
+    name: "${formated_name} Button"
+    pin:
+      number: GPIO4
+      inverted: yes
+      mode:
+        input: true
+        pullup: true
+    internal: true
+  # Input 1
+  - platform: gpio
+    name: "${channel_1} input"
     pin:
       number: GPIO5
-    name: "${channel_1} input"
-    on_state:
+      ignore_strapping_warning: true
+    filters:
+      - delayed_on_off: 50ms
+    on_press:
       then:
         - light.toggle: lightid1
+    internal: true
+  # Input 2
   - platform: gpio
-    pin:
-      number: GPIO13
     name: "${channel_2} input"
-    on_state:
+    pin: GPIO18
+    filters:
+      - delayed_on_off: 50ms
+    on_press:
       then:
-        - switch.toggle: switchid2
+        - light.toggle: lightid2
+    internal: true
+
+sensor:
+  # Reports how long the device has been powered (in hours) since last reboot
+  - platform: uptime
+    name: ${formated_name} Uptime
+    update_interval: 60s
+    entity_category: diagnostic
+    filters:
+      - lambda: return x / 3600;
+    unit_of_measurement: "h"
+  - platform: wifi_signal
+    name: "${formated_name} Wifi Signal"
+    update_interval: 60s
+    entity_category: diagnostic
+
+  # Power Sensor
+  # On the Plus 2PM the channels are mixed: ch_a = output 2, ch_b = output 1
+  - platform: ade7953_i2c
+    irq_pin: GPIO27 # Prevent overheating by setting this
+    voltage:
+      name: ${formated_name} Voltage
+      entity_category: diagnostic
+    current_a:
+      name: ${channel_2} Current
+      entity_category: diagnostic
+    active_power_a:
+      name: ${channel_2} Power
+      id: power_channel_2
+      entity_category: diagnostic
+      # active_power_a is inverted, so multiply by -1
+      filters:
+        - multiply: -1
+      on_value_range:
+        - above: ${max_power}
+          then:
+            - light.turn_off: lightid2
+            - homeassistant.service:
+                service: persistent_notification.create
+                data:
+                  title: Message from ${formated_name}
+                data_template:
+                  message: Switch turned off because power exceeded ${max_power}W
+    current_b:
+      name: ${channel_1} Current
+      entity_category: diagnostic
+    active_power_b:
+      name: ${channel_1} Power
+      id: power_channel_1
+      entity_category: diagnostic
+      on_value_range:
+        - above: ${max_power}
+          then:
+            - light.turn_off: lightid1
+            - homeassistant.service:
+                service: persistent_notification.create
+                data:
+                  title: Message from ${formated_name}
+                data_template:
+                  message: Switch turned off because power exceeded ${max_power}W
+    update_interval: 10s
+
+  - platform: total_daily_energy
+    name: ${channel_1} Energy
+    power_id: power_channel_1
+    filters:
+      # Multiplication factor from W to kWh is 0.001
+      - multiply: 0.001
+    unit_of_measurement: kWh
+
+  - platform: total_daily_energy
+    name: ${channel_2} Energy
+    power_id: power_channel_2
+    filters:
+      # Multiplication factor from W to kWh is 0.001
+      - multiply: 0.001
+    unit_of_measurement: kWh
+
+  # Internal NTC Temperature sensor
+  - platform: ntc
+    sensor: temp_resistance_reading
+    name: ${formated_name} Temperature
+    unit_of_measurement: °C
+    accuracy_decimals: 1
+    icon: mdi:thermometer
+    entity_category: diagnostic
+    calibration:
+      b_constant: 3350
+      reference_resistance: 4.7kOhm
+      reference_temperature: 298.15K
+    on_value_range:
+      - above: ${max_temp}
+        then:
+          - light.turn_off: lightid1
+          - light.turn_off: lightid2
+          - homeassistant.service:
+              service: persistent_notification.create
+              data:
+                title: Message from ${formated_name}
+              data_template:
+                message: Switch turned off because temperature exceeded ${max_temp}°C
+
+  # Required for NTC sensor
+  - platform: resistance
+    id: temp_resistance_reading
+    sensor: temp_analog_reading
+    configuration: DOWNSTREAM
+    resistor: 5.6kOhm
+
+  # Required for NTC sensor
+  - platform: adc
+    id: temp_analog_reading
+    pin: GPIO35
+    attenuation: 12db
+    update_interval: 10s
