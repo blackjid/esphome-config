@@ -17,13 +17,20 @@ i2c:
   sda: GPIO26
   scl: GPIO25
 
+status_led:
+  pin:
+    number: GPIO0
+    inverted: yes
+
 output:
   - platform: gpio
     id: relay_output_1
     pin: GPIO13
   - platform: gpio
     id: relay_output_2
-    pin: GPIO12
+    pin:
+      number: GPIO12
+      ignore_strapping_warning: true
 
 light:
   - platform: binary
@@ -36,10 +43,26 @@ light:
     id: terrace_ceiling_light
 
 binary_sensor:
+  # Device button
+  - platform: gpio
+    name: "${formated_name} Button"
+    pin:
+      number: GPIO4
+      inverted: yes
+      mode:
+        input: true
+        pullup: true
+    internal: true
   # Input 1
   - platform: gpio
     name: input_1
-    pin: GPIO5
+    pin:
+      number: GPIO5
+      ignore_strapping_warning: true
+    # Line referenced input, delayed_off has to bridge the AC zero crossings
+    filters:
+      - delayed_on: 20ms
+      - delayed_off: 120ms
     on_state:
       then:
         - if:
@@ -48,8 +71,8 @@ binary_sensor:
                 - wifi.connected:
                 - api.connected:
             then:
-              - homeassistant.action:
-                  action: light.toggle
+              - homeassistant.service:
+                  service: light.toggle
                   data:
                     entity_id: light.outside_sconces
             else:
@@ -59,6 +82,10 @@ binary_sensor:
   - platform: gpio
     name: input_2
     pin: GPIO18
+    # Line referenced input, delayed_off has to bridge the AC zero crossings
+    filters:
+      - delayed_on: 20ms
+      - delayed_off: 120ms
     on_state:
       then:
         - light.toggle: terrace_ceiling_light
@@ -84,8 +111,8 @@ sensor:
         - above: ${max_power}
           then:
             - light.turn_off: terrace_ceiling_light
-            - homeassistant.action:
-                action: persistent_notification.create
+            - homeassistant.service:
+                service: persistent_notification.create
                 data:
                   title: Message from ${formated_name}
                 data_template:
@@ -103,8 +130,8 @@ sensor:
         - above: ${max_power}
           then:
             - light.turn_off: terrace_sconces_light
-            - homeassistant.action:
-                action: persistent_notification.create
+            - homeassistant.service:
+                service: persistent_notification.create
                 data:
                   title: Message from ${formated_name}
                 data_template:
