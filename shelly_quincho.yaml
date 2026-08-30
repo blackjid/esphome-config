@@ -119,8 +119,8 @@ sensor:
         - above: ${max_power}
           then:
             - light.turn_off: lightid2
-            - homeassistant.service:
-                service: persistent_notification.create
+            - homeassistant.action:
+                action: persistent_notification.create
                 data:
                   title: Message from ${formated_name}
                 data_template:
@@ -136,8 +136,8 @@ sensor:
         - above: ${max_power}
           then:
             - light.turn_off: lightid1
-            - homeassistant.service:
-                service: persistent_notification.create
+            - homeassistant.action:
+                action: persistent_notification.create
                 data:
                   title: Message from ${formated_name}
                 data_template:
@@ -177,8 +177,8 @@ sensor:
         then:
           - light.turn_off: lightid1
           - light.turn_off: lightid2
-          - homeassistant.service:
-              service: persistent_notification.create
+          - homeassistant.action:
+              action: persistent_notification.create
               data:
                 title: Message from ${formated_name}
               data_template:
