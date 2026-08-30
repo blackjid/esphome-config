@@ -3,13 +3,16 @@ substitutions:
   devicetype: shelly plus 2pm # PCB v0.1.9
   formated_name: Shelly Quincho
   # Name for the relays
-  channel_1: Ceiling
-  channel_2: Table
+  channel_1: Fan
+  channel_2: Lights
   max_power: "2000.0" # watt
   max_temp: "83.0" # °C
 
   comment: |-
-    Placed in the quincho and controls the ceiling and table lights
+    Placed in the quincho and controls the ceiling fan and the lights
+    Relay 1 (S1 input) feeds the fan and must stay powered, the fan is
+    controlled by its own controller, so the input is detached from the relay
+    Relay 2 (S2 input) controls the quincho lights
 
 # Dual core ESP32-U4WDH (post Sept 2022 PCB v0.1.9), so the arduino framework is fine
 <<: !include common/esphome/esp32doit.yaml
@@ -35,20 +38,23 @@ output:
       number: GPIO12
       ignore_strapping_warning: true
 
-light:
-  - platform: binary
-    name: ${channel_1}
-    output: relay_output_1
-    id: lightid1
-  - platform: binary
-    name: ${channel_2}
-    output: relay_output_2
-    id: lightid2
-
 switch:
+  # The fan needs permanent power, it is controlled downstream and not by S1
+  - platform: output
+    id: fan_relay
+    name: ${channel_1} relay
+    output: relay_output_1
+    entity_category: config
+    restore_mode: ALWAYS_ON
   - platform: restart
     name: "Restart"
     entity_category: config
+
+light:
+  - platform: binary
+    name: ${channel_2}
+    output: relay_output_2
+    id: quincho_lights
 
 binary_sensor:
   # Device button
@@ -61,28 +67,29 @@ binary_sensor:
         input: true
         pullup: true
     internal: true
-  # Input 1
+  # Input 1, detached from the relay. Exposed so it can drive HA automations,
+  # it only makes sure the fan relay never stays off
   - platform: gpio
-    name: "${channel_1} input"
+    id: input_1
+    name: ${channel_1} input
     pin:
       number: GPIO5
       ignore_strapping_warning: true
     filters:
       - delayed_on_off: 50ms
-    on_press:
+    on_state:
       then:
-        - light.toggle: lightid1
-    internal: true
-  # Input 2
+        - switch.turn_on: fan_relay
+  # Input 2 controls the lights. on_state so both edges of a toggle switch work
   - platform: gpio
-    name: "${channel_2} input"
+    id: input_2
+    name: ${channel_2} input
     pin: GPIO18
     filters:
       - delayed_on_off: 50ms
-    on_press:
+    on_state:
       then:
-        - light.toggle: lightid2
-    internal: true
+        - light.toggle: quincho_lights
 
 sensor:
   # Reports how long the device has been powered (in hours) since last reboot
@@ -99,7 +106,7 @@ sensor:
     entity_category: diagnostic
 
   # Power Sensor
-  # On the Plus 2PM the channels are mixed: ch_a = output 2, ch_b = output 1
+  # On the Plus 2PM the channels are mixed: ch_a = relay 2, ch_b = relay 1
   - platform: ade7953_i2c
     irq_pin: GPIO27 # Prevent overheating by setting this
     voltage:
@@ -118,13 +125,13 @@ sensor:
       on_value_range:
         - above: ${max_power}
           then:
-            - light.turn_off: lightid2
-            - homeassistant.action:
-                action: persistent_notification.create
+            - light.turn_off: quincho_lights
+            - homeassistant.service:
+                service: persistent_notification.create
                 data:
                   title: Message from ${formated_name}
                 data_template:
-                  message: Switch turned off because power exceeded ${max_power}W
+                  message: ${channel_2} turned off because power exceeded ${max_power}W
     current_b:
       name: ${channel_1} Current
       entity_category: diagnostic
@@ -135,13 +142,13 @@ sensor:
       on_value_range:
         - above: ${max_power}
           then:
-            - light.turn_off: lightid1
-            - homeassistant.action:
-                action: persistent_notification.create
+            - switch.turn_off: fan_relay
+            - homeassistant.service:
+                service: persistent_notification.create
                 data:
                   title: Message from ${formated_name}
                 data_template:
-                  message: Switch turned off because power exceeded ${max_power}W
+                  message: ${channel_1} turned off because power exceeded ${max_power}W
     update_interval: 10s
 
   - platform: total_daily_energy
@@ -175,14 +182,14 @@ sensor:
     on_value_range:
       - above: ${max_temp}
         then:
-          - light.turn_off: lightid1
-          - light.turn_off: lightid2
-          - homeassistant.action:
-              action: persistent_notification.create
+          - light.turn_off: quincho_lights
+          - switch.turn_off: fan_relay
+          - homeassistant.service:
+              service: persistent_notification.create
               data:
                 title: Message from ${formated_name}
               data_template:
-                message: Switch turned off because temperature exceeded ${max_temp}°C
+                message: Outputs turned off because temperature exceeded ${max_temp}°C
 
   # Required for NTC sensor
   - platform: resistance
