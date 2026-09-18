@@ -107,7 +107,7 @@ binary_sensor:
               - homeassistant.action:
                   action: fan.toggle
                   data:
-                    entity_id: fan.quincho_fan
+                    entity_id: fan.quincho_quincho_fan
   # Input 2 controls the lights. on_state so both edges of a toggle switch work
   - platform: gpio
     id: input_2
