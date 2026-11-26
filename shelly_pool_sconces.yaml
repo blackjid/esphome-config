@@ -62,7 +62,7 @@ sensor:
     name: "${devicename} energy"
     power_id: "shelly1pm_power"
     device_class: energy
-    state_class: measurement
+    state_class: total_increasing  # required by the HA Energy dashboard
     filters:
       - multiply: 0.001
     unit_of_measurement: kWh
