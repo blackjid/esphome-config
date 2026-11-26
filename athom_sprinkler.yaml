@@ -198,6 +198,7 @@ number:
     id: sprinkler_start_offset
     name: Start offset
     icon: mdi:timer-outline
+    entity_category: config
     unit_of_measurement: min
     min_value: 0
     max_value: 180
