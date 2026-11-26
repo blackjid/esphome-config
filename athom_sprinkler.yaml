@@ -17,7 +17,7 @@ substitutions:
     Backyard
 
     Location: Green Garden Backyard
-    Device: Sonoff 4ch R3
+    Device: Athom 8ch ESP32 Sprinkler
 
   valve_switch_1_name: (ch1) Terraza
   valve_switch_2_name: (ch2) Jardinera Fondo
@@ -36,8 +36,8 @@ substitutions:
 
 esp32_ble_tracker:
   scan_parameters:
-    interval: 1100ms
-    window: 1100ms
+    interval: 320ms
+    window: 30ms
     active: true
 
 bluetooth_proxy:
@@ -46,6 +46,7 @@ bluetooth_proxy:
 sprinkler:
   - id: $controllername
     main_switch: ${formated_name} - Run Now All
+    valve_open_delay: 3s  # let previous solenoid close before next opens
     auto_advance_switch:
       name: ${formated_name} - Auto Enabled
       restore_mode: RESTORE_DEFAULT_ON
@@ -157,83 +158,46 @@ sensor:
     filters:
       - delta: 1.0
     lambda: |-
-      auto active_valve = id($controllername).active_valve().value_or(0);
+      auto active = id($controllername).active_valve();
+      if (!active.has_value()) {
+        return 0;
+      }
+      auto active_valve = active.value();
       auto run_duration = id($controllername).valve_run_duration_adjusted(active_valve);
       auto remaining_active_valve = id($controllername).time_remaining_active_valve().value_or(0);
       if (run_duration == 0) {
         return 0;  // Prevent division by zero
       }
-      return (run_duration - remaining_active_valve) * 100 / run_duration;
+      float d = run_duration, r = remaining_active_valve;
+      return std::max(0.0f, std::min(100.0f, (d - r) * 100.0f / d));
 
 time:
-  - platform: homeassistant
-    id: homeassistant_time
-    timezone: <+03>3
-    on_time_sync:
-      then:
-        - logger.log:
-            level: INFO
-            format:  "Time synchronized 2"
-
   - platform: sntp
     id: sntp_time
-    timezone: <+03>3
+    timezone: America/Santiago
     on_time_sync:
       then:
         - logger.log:
             level: INFO
-            format:  "Time synchronized"
+            format: "Time synchronized"
     on_time:
-      # Every morning on weekdays
+      # Every day at 22:30, delayed by HA start offset (minutes)
       - seconds: 0
         minutes: 30
         hours: 22
         then:
+          - delay: !lambda |-
+              float offset = id(sprinkler_start_offset).state;
+              if (isnan(offset) || offset < 0) offset = 0;
+              if (offset > 180) offset = 180;  // cap at 3h
+              return (uint32_t) (offset * 60000);
           - sprinkler.start_full_cycle: $controllername
-      - seconds: 0
-        minutes: 36
-        hours: 10
-        then:
-          - lambda: |-
-              ESP_LOGI("interval_logger", "Start trigger, flag set");
-              id(flag_start_process) = true;
 
 number:
   - platform: homeassistant
     id: sprinkler_start_offset
     name: Start offset
     entity_id: input_number.sprinkler_start_offset
-    on_value:
-      then:
-        - lambda: |-
-            id(start_offset_minutes) = (int) x;
-            ESP_LOGI("main", "Variable set from Home Assistant: %d", id(start_offset_minutes));
-
-interval:
-  - interval: 1min
-    then:
-      - lambda: |-
-          ESP_LOGI("interval_logger", "Checking Flag");
-          if (id(flag_start_process)) {
-            if (id(start_offset_minutes)-- > 0) {
-              ESP_LOGI("interval_logger", "Countdown in progress: %d minutes remaining", id(start_offset_minutes));
-            } else {
-              // Countdown reached 0, start the process
-              id(flag_start_process) = false; // Reset flag
-              ESP_LOGI("interval_logger", "Countdown complete. Starting the controller function.");
-              // id(controller_component).start();
-            }
-          }
-
-globals:
-  - id: start_offset_minutes
-    type: int
-    restore_value: no
-    initial_value: '0'  # Default offset in minutes, can be modified
-  - id: flag_start_process
-    type: bool
-    restore_value: yes
-    initial_value: 'false'
 
 switch:
   - platform: gpio
@@ -241,59 +205,75 @@ switch:
     name: "irrigation_relay1"
     pin: $rel1_gpio
     internal: true # Prevents GPIO switch NAME from showing up in Home Assistant
-    restore_mode: RESTORE_DEFAULT_OFF  # Prevents GPIO pin from going high during boot
+    restore_mode: ALWAYS_OFF  # Never reopen a valve after reboot
+    interlock: &relays [relay1, relay2, relay3, relay4, relay5, relay6, relay7, relay8]
+    interlock_wait_time: 500ms
 
   - platform: gpio
     id: relay2
     name: "irrigation_relay2"
     pin: $rel2_gpio
     internal: true # Prevents GPIO switch NAME from showing up in Home Assistant
-    restore_mode: RESTORE_DEFAULT_OFF  # Prevents GPIO pin from going high during boot
+    restore_mode: ALWAYS_OFF  # Never reopen a valve after reboot
+    interlock: *relays
+    interlock_wait_time: 500ms
 
   - platform: gpio
     id: relay3
     name: "irrigation_relay3"
     pin: $rel3_gpio
     internal: true # Prevents GPIO switch NAME from showing up in Home Assistant
-    restore_mode: RESTORE_DEFAULT_OFF  # Prevents GPIO pin from going high during boot
+    restore_mode: ALWAYS_OFF  # Never reopen a valve after reboot
+    interlock: *relays
+    interlock_wait_time: 500ms
 
   - platform: gpio
     id: relay4
     name: "irrigation_relay4"
     pin: $rel4_gpio
     internal: true # Prevents GPIO switch NAME from showing up in Home Assistant
-    restore_mode: RESTORE_DEFAULT_OFF  # Prevents GPIO pin from going high during boot
+    restore_mode: ALWAYS_OFF  # Never reopen a valve after reboot
+    interlock: *relays
+    interlock_wait_time: 500ms
 
   - platform: gpio
     id: relay5
     name: "irrigation_relay5"
     pin: $rel5_gpio
     internal: true # Prevents GPIO switch NAME from showing up in Home Assistant
-    restore_mode: RESTORE_DEFAULT_OFF  # Prevents GPIO pin from going high during boot
+    restore_mode: ALWAYS_OFF  # Never reopen a valve after reboot
+    interlock: *relays
+    interlock_wait_time: 500ms
 
   - platform: gpio
     id: relay6
     name: "irrigation_relay6"
     pin: $rel6_gpio
     internal: true # Prevents GPIO switch NAME from showing up in Home Assistant
-    restore_mode: RESTORE_DEFAULT_OFF  # Prevents GPIO pin from going high during boot
+    restore_mode: ALWAYS_OFF  # Never reopen a valve after reboot
+    interlock: *relays
+    interlock_wait_time: 500ms
 
   - platform: gpio
     id: relay7
     name: "irrigation_relay7"
     pin: $rel7_gpio
     internal: true # Prevents GPIO switch NAME from showing up in Home Assistant
-    restore_mode: RESTORE_DEFAULT_OFF  # Prevents GPIO pin from going high during boot
+    restore_mode: ALWAYS_OFF  # Never reopen a valve after reboot
+    interlock: *relays
+    interlock_wait_time: 500ms
 
   - platform: gpio
     id: relay8
     name: "irrigation_relay8"
     pin: $rel8_gpio
     internal: true # Prevents GPIO switch NAME from showing up in Home Assistant
-    restore_mode: RESTORE_DEFAULT_OFF  # Prevents GPIO pin from going high during boot
+    restore_mode: ALWAYS_OFF  # Never reopen a valve after reboot
+    interlock: *relays
+    interlock_wait_time: 500ms
 
   - platform: restart
-    name: "Restart"
+    name: "${formated_name} - Restart"
 
 text_sensor:
   # Expose Valve Status as a sensor.
@@ -310,9 +290,9 @@ text_sensor:
         last = x;
         return x;
     lambda: |-
-      int active_valve_number = id($controllername).active_valve().value_or(0);
-      if (active_valve_number > 0) {
-        return std::string(id($controllername).valve_name(active_valve_number));
+      auto active = id($controllername).active_valve();
+      if (active.has_value()) {
+        return std::string(id($controllername).valve_name(active.value()));
       }
       return std::string(id($controllername).standby() ? "Standby" : "Idle");
 
@@ -337,11 +317,10 @@ text_sensor:
       seconds = seconds % 3600;
       int minutes = seconds /  60;
       seconds = seconds % 60;
-        return {
-          ((days ? std::to_string(days) + "d " : "") +
-          (hours ? std::to_string(hours) + "h " : "") +
-          (minutes ? std::to_string(minutes) + "m " : "") +
-          (std::to_string(seconds) + "s")).c_str()};
+      return (days ? std::to_string(days) + "d " : "") +
+             (hours ? std::to_string(hours) + "h " : "") +
+             (minutes ? std::to_string(minutes) + "m " : "") +
+             std::to_string(seconds) + "s";
 
   - platform: template
     id: total_time_remaining
@@ -363,14 +342,13 @@ text_sensor:
       seconds = seconds % 3600;
       int minutes = seconds /  60;
       seconds = seconds % 60;
-        return {
-          ((days ? std::to_string(days) + "d " : "") +
-          (hours ? std::to_string(hours) + "h " : "") +
-          (minutes ? std::to_string(minutes) + "m " : "") +
-          (std::to_string(seconds) + "s")).c_str()};
+      return (days ? std::to_string(days) + "d " : "") +
+             (hours ? std::to_string(hours) + "h " : "") +
+             (minutes ? std::to_string(minutes) + "m " : "") +
+             std::to_string(seconds) + "s";
 
 logger:
-  level: VERBOSE
+  level: DEBUG
 
 status_led:
   pin:
