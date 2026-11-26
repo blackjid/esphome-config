@@ -27,7 +27,9 @@ sensor:
   - platform: adc
     pin: A0
     name: "${formated_name} Power"
-    update_interval: 1s
+    update_interval: 10s
+    filters:
+      - delta: 0.01  # only publish real changes (volts)
 
 light:
   - platform: rgb
