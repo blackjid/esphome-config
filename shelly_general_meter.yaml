@@ -4,8 +4,6 @@ substitutions:
   scale_a_power: '1.143207411'
   scale_b_power: '1.143207411'
 
-  api_reboot_timeout: 15min
-
   comment: |-
     Placed in the main breaker box in the entrace, measury general household consumtion
 
