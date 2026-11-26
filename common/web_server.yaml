@@ -1,6 +1,7 @@
 ---
 web_server:
   version: 3
+  ota: false  # firmware only via encrypted OTA (captive portal still allows recovery)
   auth:
     username: admin
     password: !secret web_password
