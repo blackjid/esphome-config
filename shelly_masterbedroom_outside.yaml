@@ -2,6 +2,7 @@ substitutions:
   devicename: shelly-masterbedroom-outside
   formated_name: Shelly Master Bedroom Outside
   max_power: "2000.0" # watt
+  max_temp: "83.0" # °C
   # Name for the relays
   channel_1: Terrace Sconces 2
   channel_2: Garage / Green Garden Sconces
@@ -153,6 +154,17 @@ sensor:
       b_constant: 3350
       reference_resistance: 4.7kOhm
       reference_temperature: 298.15K
+    on_value_range:
+      - above: ${max_temp}
+        then:
+          - light.turn_off: terrace_sconces_light
+          - light.turn_off: garage_sconces_light
+          - homeassistant.action:
+              action: persistent_notification.create
+              data:
+                title: Message from ${formated_name}
+              data_template:
+                message: Outputs turned off because temperature exceeded ${max_temp}°C
 
   # Required for NTC sensor
   - platform: resistance
