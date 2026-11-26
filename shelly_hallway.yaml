@@ -43,6 +43,10 @@ binary_sensor:
       number: GPIO5
       #mode: INPUT_PULLUP
       #inverted: True
+    # Line referenced input, delayed_off has to bridge the AC zero crossings
+    filters:
+      - delayed_on: 20ms
+      - delayed_off: 120ms
     name: ${channel_1} Switch
     on_state:
       then:
