@@ -10,6 +10,9 @@ esp32:
   framework:
     type: esp-idf
     version: recommended
+    advanced:
+      minimum_chip_revision: "3.1"  # Athom board is ESP32 rev3.1
+      flash_chip: gd  # saves IRAM
 
 preferences:
   flash_write_interval: 5min
