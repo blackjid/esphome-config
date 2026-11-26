@@ -181,7 +181,7 @@ time:
             level: INFO
             format: "Time synchronized"
     on_time:
-      # Every day at 22:30, delayed by HA start offset (minutes)
+      # Every day at 22:30, delayed by start offset (minutes, stored on device)
       - seconds: 0
         minutes: 30
         hours: 22
@@ -194,10 +194,17 @@ time:
           - sprinkler.start_full_cycle: $controllername
 
 number:
-  - platform: homeassistant
+  - platform: template
     id: sprinkler_start_offset
     name: Start offset
-    entity_id: input_number.sprinkler_start_offset
+    icon: mdi:timer-outline
+    unit_of_measurement: min
+    min_value: 0
+    max_value: 180
+    step: 5
+    optimistic: true
+    restore_value: true
+    initial_value: 0
 
 switch:
   - platform: gpio
