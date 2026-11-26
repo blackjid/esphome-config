@@ -300,7 +300,8 @@ text_sensor:
     lambda: |-
       auto active = id($controllername).active_valve();
       if (active.has_value()) {
-        return std::string(id($controllername).valve_name(active.value()));
+        char buf[ENTITY_NAME_BUF_SIZE];
+        return id($controllername).control_switch(active.value())->get_name_to(buf).str();
       }
       return std::string(id($controllername).standby() ? "Standby" : "Idle");
 
@@ -355,8 +356,6 @@ text_sensor:
              (minutes ? std::to_string(minutes) + "m " : "") +
              std::to_string(seconds) + "s";
 
-logger:
-  level: DEBUG
 
 status_led:
   pin:
