@@ -1,9 +1,6 @@
 ---
+# SNTP only: keeps working when Home Assistant is down
 time:
-  - platform: homeassistant
-    id: homeassistant_time
-    timezone: America/Santiago
-
   - platform: sntp
     id: sntp_time
     timezone: America/Santiago
@@ -11,4 +8,4 @@ time:
       then:
         - logger.log:
             level: INFO
-            format:  "Time synchronized"
+            format: "Time synchronized"
